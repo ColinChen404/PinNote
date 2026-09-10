@@ -1,0 +1,47 @@
+{
+  "name": "pinnote",
+  "version": "1.2.0",
+  "description": "PinNote - 在图片上打点/画框标注并写下修改建议，一键导出长页 PDF",
+  "author": "Colin Chen",
+  "license": "MIT",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "smoke": "electron . --smoke",
+    "build": "electron-builder"
+  },
+  "build": {
+    "appId": "com.colinchen.pinnote",
+    "productName": "PinNote",
+    "copyright": "Copyright © 2026 Colin Chen",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build-res"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "index.html",
+      "src/**/*",
+      "package.json",
+      "build-res/**/*"
+    ],
+    "icon": "build-res/icon.png",
+    "win": {
+      "target": "nsis",
+      "icon": "build-res/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "PinNote"
+    }
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  }
+}

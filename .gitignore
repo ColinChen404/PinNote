@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.npm-cache/
+.electron-cache/
+.builder-cache/
+.runtime-cache/
+smoke_test.pdf
+*.log
+.workbuddy/
