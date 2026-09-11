@@ -2,12 +2,6 @@
 
 ![PinNote 海报](docs/poster.png)
 
-<img src="build-res/icon.png" width="160" alt="PinNote">
-
-## 把设计稿上的问题钉清楚
-
-**一款轻量的设计稿评审工具。**
-
 直接在详情页、UI 稿和截图上打点、框选、写修改意见、附参考图，
 再导出为一份清楚、可执行的 PDF 修改单。
 
