@@ -1,5 +1,7 @@
 # PinNote
 
+![PinNote 海报](docs/poster.png)
+
 <img src="build-res/icon.png" width="160" alt="PinNote">
 
 ## 把设计稿上的问题钉清楚
