@@ -84,6 +84,7 @@
 6. **追加图片文件名**：导入/追加图片时文件名加随机后缀，避免重名互相覆盖。
 7. **模板字面量里写反斜杠（冒烟测试专属雷）**：`runSmoke` 的 executeJavaScript 脚本是模板字符串包裹的，脚本里正则的 `\/` 会被模板求值先坍缩成 `/`（如 `/^image\//` 变 `/^image//`，直接 SyntaxError），必须写成 `\\/` 才能在注入后的脚本里存活一个 `\`。`node --check main.js` 查不出这种错（模板本身合法），要在渲染层报错里看。
 8. **合成 ClipboardEvent 只存活 file 条目**：`new ClipboardEvent('paste', {clipboardData})` 传入的 DataTransfer 里 string 类条目（如 text/plain）会丢失，"文本+图片混合剪贴板优先粘贴文字"的分支无法用合成事件覆盖，只能人工验证。
+9. **安装包里 `__dirname` 在只读的 app.asar 内（1.2.1 教训）**：任何运行时写文件都不能落在 `__dirname` 下，否则安装版报 ENOENT（导出 PDF 踩过）。写路径一律走 `E_CACHE`（已按 `app.isPackaged` 区分：安装版=`userData/runtime-cache`，开发态=项目 `.runtime-cache`）。**验证打包版行为必须跑 `dist\win-unpacked\PinNote.exe --smoke`**，开发态冒烟测不出这类差异。
 
 ## 7. 冒烟测试（能长期用的自动化回归）
 
