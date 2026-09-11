@@ -36,7 +36,7 @@ PinNote 把零散的视觉反馈整理成一张清晰、可执行的修改方案
 
 ## 下载 / Download
 
-前往 **[Releases](https://github.com/ColinChen404/pinnote/releases/latest)** 下载最新版安装包（如 `PinNote Setup 1.2.0.exe`），按向导安装即用。
+前往 **[Releases](https://github.com/ColinChen404/pinnote/releases/latest)** 下载最新版安装包（如 `PinNote Setup 1.2.1.exe`），按向导安装即用。
 
 ✅ Windows 10 / 11
 

@@ -10,8 +10,11 @@ const fs = require('fs');
 
 const IS_SMOKE = process.argv.includes('--smoke');
 
-// Electron 磁盘/GPU 缓存目录（本项目根目录下 .runtime-cache，不影响正式 userData）
-const E_CACHE = path.join(__dirname, '.runtime-cache');
+// Electron 磁盘/GPU 缓存目录。开发/冒烟态放项目根 .runtime-cache；安装包态 __dirname 在只读
+// 的 app.asar 里写不进文件（导出 PDF 曾因此 ENOENT），改用可写的 userData。
+const E_CACHE = app.isPackaged
+  ? path.join(app.getPath('userData'), 'runtime-cache')
+  : path.join(__dirname, '.runtime-cache');
 try {
   fs.mkdirSync(E_CACHE, { recursive: true });
   app.setPath('cache', path.join(E_CACHE, 'cache'));

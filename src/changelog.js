@@ -5,6 +5,13 @@
  */
 window.PINNOTE_CHANGELOG = [
   {
+    version: '1.2.1',
+    date: '2026-09-11',
+    items: [
+      '修复：安装版点击「导出 PDF」报错（临时文件被写入只读目录），现已正常导出'
+    ]
+  },
+  {
     version: '1.2.0',
     date: '2026-09-10',
     items: [
