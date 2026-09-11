@@ -1,11 +1,24 @@
 # PinNote
 
-![PinNote logo](build-res/icon.png)
+<img src="build-res/icon.png" width="160" alt="PinNote">
 
-**轻量级视觉反馈标注工具 · Lightweight Visual Feedback Tool**
+## 把设计稿上的问题钉清楚
 
-在图片上打点、画框、写修改建议、配参考图，一键导出长页 PDF 反馈文档。
-Annotate screenshots, gather suggestions, attach references, and export everything as one long-page PDF.
+**一款轻量的设计稿评审工具。**
+
+直接在详情页、UI 稿和截图上打点、框选、写修改意见、附参考图，
+再导出为一份清楚、可执行的 PDF 修改单。
+
+无需登录 · 无需上传 · 数据保存在本机
+
+**English**
+
+Turn visual feedback into clear, actionable revisions.
+
+A lightweight tool for reviewing designs, attaching references,
+and exporting structured PDF feedback.
+
+**⬇️ [下载最新版 Download](https://github.com/ColinChen404/pinnote/releases/latest)** · Windows 10 / 11
 
 ![PinNote 应用截图](docs/screenshot.png)
 
@@ -17,16 +30,25 @@ Annotate screenshots, gather suggestions, attach references, and export everythi
 
 ### 为什么做 PinNote
 
-电商详情页审核、设计评审、UI 走查……纯文字很难说清 **「问题在哪里、要改成什么样」**。
+PinNote 最初只是为了解决一个很具体的问题：**怎么给一张电商详情页提修改意见。**
 
-PinNote 把零散的视觉反馈整理成一张清晰、可执行的修改方案：
+过去我们的做法，像是从石器时代一路传承下来的：先给详情页截图，再把图片一张张塞进 Excel，最后在旁边另开一列写反馈。
 
-| | |
-|---|---|
-| 📍 **精准标注** | 标记点 / 框选区域，缩放画布，逐条定位问题 |
-| ✍️ **修改说明** | 每条标注自动连线到建议框，随标注实时更新 |
-| 🖼 **参考示例** | 拖入或粘贴参考图，直观表达「改成什么样」 |
-| 📄 **一键交付** | 导出长页单页 PDF，直接发给设计师 / 研发 / 供应商 |
+这种方法不是完全不能用，毕竟我也真这么用了四年。问题是，描述"怎么改"往往并不难，痛苦的是每条意见之前，还得先描述"要改的地方到底在哪里"。
+
+"第二屏偏下那张产品图的右边。"
+"不是主标题，是主标题下面那行小字。"
+"再往下一点，对，就是那里。"
+
+一条本来十几个字就能说清的修改意见，前面常常要先加上一大段寻址说明。反馈的人写得累，设计师找得也累；等设计稿换了一版，截图、排版和位置还得重新来一遍。
+
+其实第一年我就在想：为什么不能直接在原图上点一下？
+
+点出问题位置，框出修改范围，在旁边写清楚怎么改；如果语言还是不够，就再放一张参考图。最后把所有意见整理成一份修改单，直接发给设计师、开发或供应商。不就完了吗？
+
+可惜我不会编程。
+
+感谢有 vibe-coding 的时代。
 
 ### 核心能力
 
@@ -36,12 +58,6 @@ PinNote 把零散的视觉反馈整理成一张清晰、可执行的修改方案
 - **自动保存**：0.6s 防抖自动保存，顶栏实时显示保存状态
 - **导出可控**：2x 超采样长页单页 PDF，超长图自动等比缩放不裁切
 - **纯本地**：无账号、无联网、无云端服务，数据完全保存在本地
-
-### 下载
-
-前往 **[Releases](https://github.com/ColinChen404/pinnote/releases/latest)** 下载最新版安装包（如 `PinNote Setup 1.3.0.exe`），按向导安装即用。
-
-✅ Windows 10 / 11
 
 ### 快捷键
 
@@ -80,9 +96,12 @@ npm run build    # 打包 Windows 安装包到 dist/
 
 ### 设计理念
 
-PinNote 不追求成为复杂的协作平台，它只专注解决一个问题：
+PinNote 不追求成为复杂的在线协作或审批平台，只专注解决一个问题：
 
-> **让视觉反馈更准确，让修改沟通更高效。**
+> 让设计反馈落在具体位置上，变成清楚、可执行的修改意见。
+
+一个人用 PinNote 整理反馈，其他人通过 PDF 接收和执行。
+无需登录，无需上传，项目数据保存在本机。
 
 ---
 
@@ -90,16 +109,25 @@ PinNote 不追求成为复杂的协作平台，它只专注解决一个问题：
 
 ### Why PinNote
 
-Design reviews, e-commerce page audits, UI walkthroughs — plain text can never clearly express *where the problem is and what the expected result looks like*.
+PinNote started from a very specific problem: **how do you give feedback on an e-commerce product page?**
 
-PinNote turns scattered visual feedback into one clear, actionable document:
+The old workflow felt inherited from the stone age: screenshot every section of the page, paste the images into Excel one by one, and write your feedback in a column beside them.
 
-| | |
-|---|---|
-| 📍 **Precise annotation** | Pin points and box highlights on a zoomable canvas |
-| ✍️ **Suggestions** | Each annotation auto-connects to its note card |
-| 🖼 **References** | Drag or paste reference images to show the desired look |
-| 📄 **One-click delivery** | Export a single long-page PDF for designers / developers / vendors |
+It kind of works — I did exactly that for four years. The trouble is, describing *what to change* is easy; the painful part is that every comment has to start by describing *where on earth it applies*.
+
+"Bottom of screen two, the product image, on the right."
+"Not the headline — the small line under it."
+"A bit lower. Yes, there."
+
+A ten-word comment ends up wearing a whole paragraph of directions. Writing feedback gets exhausting, and finding the spot gets exhausting for the designer too — and when a new draft arrives, the screenshots, the layout, and every position have to be redone.
+
+Back in year one I kept thinking: why can't I just click on the image?
+
+Mark the spot, box the range, write the fix beside it; when words aren't enough, drop in a reference image. Then turn everything into one revision sheet and send it straight to the designer, developer, or supplier. Done.
+
+Unfortunately, I couldn't code.
+
+Thank goodness for the age of vibe-coding.
 
 ### Features
 
@@ -109,12 +137,6 @@ PinNote turns scattered visual feedback into one clear, actionable document:
 - **Autosave**: 0.6s debounced autosave with live status in the title bar
 - **Export**: 2x supersampled single-page PDF; oversized pages auto-scale without cropping
 - **Fully local**: no account, no network, no cloud — data never leaves your machine
-
-### Download
-
-Grab the latest installer from **[Releases](https://github.com/ColinChen404/pinnote/releases/latest)** (e.g. `PinNote Setup 1.3.0.exe`).
-
-✅ Windows 10 / 11
 
 ### Shortcuts
 
@@ -152,7 +174,12 @@ The app bundles [Noto Sans SC](https://fonts.google.com/noto/specimen/Noto+Sans+
 
 ### Philosophy
 
-> Making visual communication clearer and easier.
+PinNote has no ambition to become a complex online collaboration or approval platform. It focuses on one thing:
+
+> Put design feedback exactly where it belongs — as clear, actionable revision notes.
+
+One person organizes feedback in PinNote; everyone else receives and executes it via PDF.
+No login, no uploads — project data stays on your machine.
 
 ---
 
