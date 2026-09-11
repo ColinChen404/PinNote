@@ -30,25 +30,27 @@ and exporting structured PDF feedback.
 
 ### 为什么做 PinNote
 
-PinNote 最初只是为了解决一个很具体的问题：**怎么给一张电商详情页提修改意见。**
+PinNote 最初要解决的问题特别小：怎么给一张电商详情页提修改意见。
 
-过去我们的做法，像是从石器时代一路传承下来的：先给详情页截图，再把图片一张张塞进 Excel，最后在旁边另开一列写反馈。
+我们过去的做法，堪称石器时代的遗产——先把详情页截成图，一张张塞进 Excel，再在旁边开一列写反馈（肯定有能解决这个问题的工具，但我也确实一直没找到趁手的）。
 
-这种方法不是完全不能用，毕竟我也真这么用了四年。问题是，描述"怎么改"往往并不难，痛苦的是每条意见之前，还得先描述"要改的地方到底在哪里"。
+倒也不是不能用，毕竟我这么用了四年。问题在于："怎么改"通常一句话就能说清，真正折磨人的是先得说明"要改的地方在哪"。
 
-"第二屏偏下那张产品图的右边。"
-"不是主标题，是主标题下面那行小字。"
-"再往下一点，对，就是那里。"
+"第二屏偏下那张产品图的右边。"  
+"不是主标题，是主标题下面那行小字。"  
+"再往下一点——对，就是那里。"
 
-一条本来十几个字就能说清的修改意见，前面常常要先加上一大段寻址说明。反馈的人写得累，设计师找得也累；等设计稿换了一版，截图、排版和位置还得重新来一遍。
+一条十几个字的意见，前面要垫上一大段寻址说明。写的人累，找的人更累。设计稿一改版，截图、排版、坐标，全部重来一遍。
 
-其实第一年我就在想：为什么不能直接在原图上点一下？
+为什么不能直接在原图上点一下？
 
-点出问题位置，框出修改范围，在旁边写清楚怎么改；如果语言还是不够，就再放一张参考图。最后把所有意见整理成一份修改单，直接发给设计师、开发或供应商。不就完了吗？
+点出位置，框出范围，旁边写清楚怎么改；文字说不明白，就再贴一张参考图。所有意见自动汇总成一份修改单，直接发给设计、开发或供应商。
+
+不就完了吗。
 
 可惜我不会编程。
 
-感谢有 vibe-coding 的时代。
+——感谢这个可以 vibe coding 的时代。
 
 ### 核心能力
 
@@ -109,25 +111,27 @@ PinNote 不追求成为复杂的在线协作或审批平台，只专注解决一
 
 ### Why PinNote
 
-PinNote started from a very specific problem: **how do you give feedback on an e-commerce product page?**
+PinNote started from a remarkably small problem: how do you give revision feedback on an e-commerce product page?
 
-The old workflow felt inherited from the stone age: screenshot every section of the page, paste the images into Excel one by one, and write your feedback in a column beside them.
+Our old workflow was a relic from the stone age — screenshot the page, paste the images into Excel one by one, and write feedback in a column beside them. (Surely tools exist for this. I just never found one that felt right.)
 
-It kind of works — I did exactly that for four years. The trouble is, describing *what to change* is easy; the painful part is that every comment has to start by describing *where on earth it applies*.
+It sort of works — I did it for four years. The thing is, *"what to change"* usually takes one sentence. What's truly maddening is having to explain *"where the change goes"* first.
 
-"Bottom of screen two, the product image, on the right."
-"Not the headline — the small line under it."
+"Bottom of screen two, the product image, on the right."  
+"Not the headline — the small line under it."  
 "A bit lower. Yes, there."
 
-A ten-word comment ends up wearing a whole paragraph of directions. Writing feedback gets exhausting, and finding the spot gets exhausting for the designer too — and when a new draft arrives, the screenshots, the layout, and every position have to be redone.
+A ten-word comment ends up wearing a paragraph of directions. Exhausting to write, more exhausting to hunt down — and when the draft gets revised, the screenshots, the layout, every coordinate: start over.
 
-Back in year one I kept thinking: why can't I just click on the image?
+Why not just click on the image?
 
-Mark the spot, box the range, write the fix beside it; when words aren't enough, drop in a reference image. Then turn everything into one revision sheet and send it straight to the designer, developer, or supplier. Done.
+Mark the spot, box the range, write the fix beside it; when words aren't enough, attach a reference image. Every comment rolls up into a single revision sheet, ready to send to design, development, or a supplier.
+
+And that would be that.
 
 Unfortunately, I couldn't code.
 
-Thank goodness for the age of vibe-coding.
+—— Thank goodness for an age where you can vibe code.
 
 ### Features
 
