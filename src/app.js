@@ -162,7 +162,7 @@
     $('#more-btn', app).onclick = (e) => {
       const r = e.currentTarget.getBoundingClientRect();
       openCtxMenu(r.right - 170, r.bottom + 8, [
-        { label: '更新日志', fn: () => showChangelog(false) },
+        { label: '更新日志', fn: () => showChangelog() },
         { label: '快捷键说明', fn: showShortcuts },
         { label: '关于 PinNote', fn: showAbout }
       ]);
@@ -1487,7 +1487,7 @@
     try { lastSeen = localStorage.getItem('pinnote_seen_version'); } catch (e) {}
     if (lastSeen !== ver) {
       try { localStorage.setItem('pinnote_seen_version', ver); } catch (e) {}
-      setTimeout(() => showChangelog(true), 600);
+      setTimeout(() => showChangelog(lastSeen || '__LATEST__'), 600);
     }
   }
 
@@ -1535,14 +1535,27 @@
     document.body.appendChild(mask);
   }
 
-  function showChangelog(onlyLatest) {
+  function isNewerVersion(a, b) {
+    const pa = String(a || '').split('.'), pb = String(b || '').split('.');
+    for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+      const d = (parseInt(pa[i], 10) || 0) - (parseInt(pb[i], 10) || 0);
+      if (d) return d > 0;
+    }
+    return false;
+  }
+
+  // sinceVersion：undefined=完整历史（菜单入口）；'__LATEST__'=只显最新一轮（全新安装）；
+  // 传版本号=补齐展示该版本之后错过的所有更新（跳版本升级场景）
+  function showChangelog(sinceVersion) {
     const all = window.PINNOTE_CHANGELOG || [];
-    // onlyLatest=true：升级后首次打开，只展示最新一轮；=false：菜单打开，展示完整历史
-    const entries = onlyLatest ? all.slice(0, 1) : all;
+    let entries = all;
+    if (sinceVersion === '__LATEST__') entries = all.slice(0, 1);
+    else if (sinceVersion) entries = all.filter(en => isNewerVersion(en.version, sinceVersion));
+    if (!entries.length) entries = all.slice(0, 1);
     const mask = el('div', 'modal-mask');
     const m = el('div', 'modal changelog');
     const body = entries.map((en, i) => `
-      <div class="cl-entry${onlyLatest && i === 0 ? ' newest' : ''}">
+      <div class="cl-entry${sinceVersion && i === 0 ? ' newest' : ''}">
         <div class="cl-head"><span class="cl-v">v${escapeHtml(en.version)}</span><span class="cl-date">${escapeHtml(en.date)}</span></div>
         <ul>${(en.items || []).map(it => '<li>' + escapeHtml(it) + '</li>').join('')}</ul>
         ${en.credit ? '<div class="cl-credit">' + escapeHtml(en.credit) + '</div>' : ''}

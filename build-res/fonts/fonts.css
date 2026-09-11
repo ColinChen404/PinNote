@@ -1,0 +1,54 @@
+/* latin 400 */
+@font-face {
+  font-family: 'Noto Sans SC';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('./noto-sans-sc-latin-400-normal.woff2') format('woff2');
+}
+
+/* chinese-simplified 400 */
+@font-face {
+  font-family: 'Noto Sans SC';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('./noto-sans-sc-chinese-simplified-400-normal.woff2') format('woff2');
+}
+
+/* latin 500 */
+@font-face {
+  font-family: 'Noto Sans SC';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url('./noto-sans-sc-latin-500-normal.woff2') format('woff2');
+}
+
+/* chinese-simplified 500 */
+@font-face {
+  font-family: 'Noto Sans SC';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url('./noto-sans-sc-chinese-simplified-500-normal.woff2') format('woff2');
+}
+
+/* latin 700 */
+@font-face {
+  font-family: 'Noto Sans SC';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url('./noto-sans-sc-latin-700-normal.woff2') format('woff2');
+}
+
+/* chinese-simplified 700 */
+@font-face {
+  font-family: 'Noto Sans SC';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url('./noto-sans-sc-chinese-simplified-700-normal.woff2') format('woff2');
+}
+

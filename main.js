@@ -76,6 +76,20 @@ function rmrf(dir) {
   try { fs.rmSync(dir, { recursive: true, force: true }); } catch (e) {}
 }
 
+// 把内置字体复制到运行时缓存，供导出 PDF 的临时页面以相对路径 @font-face 引用
+function syncPdfFonts() {
+  try {
+    const srcF = path.join(__dirname, 'build-res', 'fonts');
+    const dstF = path.join(E_CACHE, 'fonts');
+    ensureDir(dstF);
+    for (const f of fs.readdirSync(srcF)) {
+      if (f.endsWith('.woff2') || f === 'fonts.css') {
+        fs.copyFileSync(path.join(srcF, f), path.join(dstF, f));
+      }
+    }
+  } catch (e) {}
+}
+
 let win = null;
 
 function createWindow() {
@@ -91,7 +105,10 @@ function createWindow() {
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
-      nodeIntegration: false
+      nodeIntegration: false,
+      // 冒烟测试用内存级会话：localStorage 与正式数据完全隔离
+      //（曾发生 smoke 把"已读版本"写进真实存储，导致用户升级后不弹更新日志）
+      partition: IS_SMOKE ? 'smoke-mem' : undefined
     }
   });
   win.loadFile('index.html');
@@ -103,6 +120,7 @@ function createWindow() {
 
 app.whenReady().then(() => {
   ensureDir(projectsDir());
+  syncPdfFonts();
   createWindow();
   if (IS_SMOKE) {
     setTimeout(runSmoke, 2500);
@@ -361,6 +379,12 @@ function esc(s) {
 function buildPdfHtml(detailDataUrl, L) {
   const W = Math.ceil(L.width);
   const H = Math.ceil(L.height);
+  // 内置字体（Noto Sans SC）从运行时缓存以相对路径引入，与应用内渲染保持一致
+  let fontCss = '';
+  try {
+    fontCss = fs.readFileSync(path.join(E_CACHE, 'fonts', 'fonts.css'), 'utf8')
+      .replace(/url\('\.\//g, "url('fonts/");
+  } catch (e) {}
   // 详情图（支持多图 + 兼容旧版单图）
   const detailImgs = (L.detailImages && L.detailImages.length) ? L.detailImages.map(d =>
     `<img style="position:absolute;left:${d.left}px;top:${d.top}px;width:${d.width}px;height:${d.height}px" src="${d.dataUrl}"/>`
@@ -386,12 +410,14 @@ function buildPdfHtml(detailDataUrl, L) {
   }).join('');
   return `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
     html,body{margin:0;padding:0;background:#fff;}
-    .page{position:relative;width:${W}px;height:${H}px;background:#fff;font-family:"Microsoft YaHei",sans-serif;}
+    ${fontCss}
+    .page{position:relative;width:${W}px;height:${H}px;background:#fff;font-family:"Noto Sans SC","Microsoft YaHei",sans-serif;}
     .detail{position:absolute;left:${L.detailLeft||0}px;top:0;width:${L.detailWidth||0}px;height:${L.detailHeight||0}px}
     .pt{position:absolute;width:10px;height:10px;border-radius:50%;background:#bf4d55;}
     .box{position:absolute;border:2px solid #bf4d55;background:rgba(191,77,85,0.05);}
     svg{position:absolute;left:0;top:0;pointer-events:none;}
-    .sg{position:absolute;background:#fff;border:1px solid #e9eaee;border-radius:4px;padding:8px 10px;font-size:12px;line-height:1.55;box-sizing:border-box;white-space:pre-wrap;word-break:break-all;color:#222;}
+    .sg{position:absolute;background:#fff;border:1px solid #e9eaee;border-radius:4px;padding:8px 10px;font-size:13px;line-height:1.65;box-sizing:border-box;white-space:pre-wrap;word-break:break-all;color:#222;}
+    /* .sg 字号与应用内建议框保持一致（app.js/style.css 同为 13px，改动需三处同步） */
     .rf{position:absolute;text-align:center;}
     .rl{font-size:11px;color:#444;margin-top:4px;}
   </style></head><body><div class="page">
@@ -622,7 +648,10 @@ async function runSmoke() {
     }
 
     // 关闭自动弹出的更新日志后截图，作为视觉回归基线（.runtime-cache/smoke_ui.png）
+    // 移除前先记录自动弹窗状态，供后续断言"首次启动必弹、只显最新一轮"
     await wc.executeJavaScript(`(async () => {
+      const cl = document.querySelector('.modal.changelog');
+      window.__autoCl = { present: !!cl, text: cl ? cl.innerText : '' };
       document.querySelectorAll('.modal-mask').forEach(m => m.remove());
       const sa = document.querySelector('.scroll-area');
       if (sa) sa.scrollTop = 0;
@@ -639,7 +668,11 @@ async function runSmoke() {
       const results = []; const rpt = (n,c) => { results.push({name:n,pass:!!c}); };
       const wait = (ms) => new Promise(r => setTimeout(r, ms));
       try {
-        // 关闭可能自动弹出的“更新日志”或遗留弹窗
+        // 断言"首次启动自动弹出更新日志"：状态已在截图步骤移除弹窗前记录（内存级存储，每次冒烟都视为刚升级）
+        const info = window.__autoCl || { present: false, text: '' };
+        const lv = ((window.PINNOTE_CHANGELOG || [])[0] || {}).version || '';
+        const prevLv = ((window.PINNOTE_CHANGELOG || [])[1] || {}).version || '';
+        rpt('首次启动自动弹出更新日志', !!info.present && !!lv && info.text.indexOf(lv) >= 0 && (!prevLv || info.text.indexOf(prevLv) < 0));
         document.querySelectorAll('.modal-mask').forEach(m => m.remove());
 
         // 1) 空白项目
