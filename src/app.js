@@ -602,9 +602,9 @@
   function buildFloatbar() {
     const fb = el('div', 'floatbar');
     fb.innerHTML = `
-      <button type="button" class="tool-btn" data-tool="select" title="V - 选择/拖动"><img class="tool-ico" src="build-res/icons/mouse.png" alt=""/><span>鼠标</span></button>
-      <button type="button" class="tool-btn" data-tool="point" title="P - 点击创建点批注"><img class="tool-ico" src="build-res/icons/point.png" alt=""/><span>点批注</span></button>
-      <button type="button" class="tool-btn" data-tool="box" title="B - 拖拽创建框批注"><img class="tool-ico" src="build-res/icons/box.png" alt=""/><span>框批注</span></button>
+      <button type="button" class="tool-btn" data-tool="select" title="Q - 选择/拖动"><img class="tool-ico" src="build-res/icons/mouse.png" alt=""/><span>鼠标</span></button>
+      <button type="button" class="tool-btn" data-tool="point" title="W - 点击创建点批注"><img class="tool-ico" src="build-res/icons/point.png" alt=""/><span>点批注</span></button>
+      <button type="button" class="tool-btn" data-tool="box" title="E - 拖拽创建框批注"><img class="tool-ico" src="build-res/icons/box.png" alt=""/><span>框批注</span></button>
       <span class="sep"></span>
       <button type="button" class="tool-btn zb" data-z="out" title="缩小 (-)">−</button>
       <span class="zoom-label" id="zoom-label" title="点击重置为 100%">100%</span>
@@ -1319,9 +1319,10 @@
         return;
       }
       const k = e.key.toLowerCase();
-      if (k === 'v') setTool('select');
-      else if (k === 'p') setTool('point');
-      else if (k === 'b') setTool('box');
+      if (e.ctrlKey || e.metaKey || e.altKey) return; // 组合键不触发工具切换（如 Ctrl+V 粘贴）
+      if (k === 'q') setTool('select');
+      else if (k === 'w') setTool('point');
+      else if (k === 'e') setTool('box');
       else if (e.key === '+' || e.key === '=') setZoom(state.zoom * ZOOM_STEP);
       else if (e.key === '-' || e.key === '_') setZoom(state.zoom / ZOOM_STEP);
       else if (e.key === '0') setZoom(1);

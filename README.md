@@ -65,9 +65,9 @@ PinNote 最初要解决的问题特别小：怎么给一张电商详情页提修
 
 | 快捷键 | 功能 |
 | --- | --- |
-| V | 鼠标（选择 / 拖动） |
-| P | 点批注 |
-| B | 框批注 |
+| Q | 鼠标（选择 / 拖动） |
+| W | 点批注 |
+| E | 框批注 |
 | Ctrl+V | 粘贴图片 |
 | Ctrl+S | 保存 |
 | Delete | 删除选中标注 |
@@ -146,9 +146,9 @@ Unfortunately, I couldn't code.
 
 | Key | Action |
 | --- | --- |
-| V | Mouse (select / drag) |
-| P | Pin annotation |
-| B | Box annotation |
+| Q | Mouse (select / drag) |
+| W | Pin annotation |
+| E | Box annotation |
 | Ctrl+V | Paste image |
 | Ctrl+S | Save |
 | Delete | Delete selected annotation |
