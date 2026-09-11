@@ -54,12 +54,12 @@ PinNote 最初要解决的问题特别小：怎么给一张电商详情页提修
 
 ### 核心能力
 
-- **多图拼接**：多张长图纵向无缝拼接成一张画布，也可创建空白项目后随时补充
-- **粘贴即用**：Ctrl+V 直接粘贴截图，自由选择粘贴为设计稿或参考图
-- **版本管理**：项目 / 版本两级管理（V1、V2…），支持重命名、归档、右键菜单操作
-- **自动保存**：0.6s 防抖自动保存，顶栏实时显示保存状态
-- **导出可控**：2x 超采样长页单页 PDF，超长图自动等比缩放不裁切
-- **纯本地**：无账号、无联网、无云端服务，数据完全保存在本地
+- **点哪儿，钉哪儿**：点批注、框批注直接落在设计稿原图上，问题位置一眼可见，不用再用文字描述"在哪"
+- **标注即建议**：每条标注自动连线一张修改说明卡，位置和意见一一对应，不会张冠李戴
+- **参考图对照**：文字说不清"改成什么样"，就贴一张参考图，挂在意见旁边
+- **一键修改单**：所有意见汇总成一份长页 PDF——带原图、标注、说明、参考图，直接发给设计、开发或供应商
+- **多稿迭代**：项目 / 版本两级管理（V1、V2…），新稿开新画布，历史随时回看
+- **顺手细节**：Ctrl+V 粘贴截图、多张长图无缝拼接、0.6s 自动保存、无需登录不上传
 
 ### 快捷键
 
@@ -135,12 +135,12 @@ Unfortunately, I couldn't code.
 
 ### Features
 
-- **Multi-page canvas**: stitch multiple long screenshots seamlessly; start from a blank project anytime
-- **Paste to annotate**: Ctrl+V any screenshot, choose to paste as canvas or reference
-- **Version management**: projects and versions (V1, V2…) with rename, archive, and context menus
-- **Autosave**: 0.6s debounced autosave with live status in the title bar
-- **Export**: 2x supersampled single-page PDF; oversized pages auto-scale without cropping
-- **Fully local**: no account, no network, no cloud — data never leaves your machine
+- **Pin it where it is**: pin and box annotations land right on the design — no more describing "where" in words
+- **Annotation is the comment**: every mark auto-connects to its own note card, so position and fix always stay paired
+- **Reference images**: when words can't say "make it look like this", attach one right beside the note
+- **One-click revision sheet**: everything rolls up into a single long-page PDF — original, annotations, notes, references — ready to send
+- **Iterate by version**: projects and versions (V1, V2…); a new draft means a fresh canvas, and history stays browsable
+- **Quality-of-life**: paste with Ctrl+V, stitch long screenshots, 0.6s autosave, no login and no uploads
 
 ### Shortcuts
 
