@@ -33,9 +33,6 @@ body {
   flex:1 1 auto; min-width:0; font-size:12.5px; color:#4b5563;
   padding:4px 2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
 }
-.topbar .app-icon { height:24px; width:24px; border-radius:6px; }
-.topbar .logo { font-weight:700; font-size:14px; letter-spacing:.2px; }
-.proj-crumb { font-size:12.5px; color:#4b5563; padding:4px 6px; max-width:260px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .proj-crumb .crumb-sep { font-style:normal; color:#c8ccd2; margin:0 2px; }
 .proj-crumb .crumb-none { color:#b6bac2; }
 .ro-badge {
@@ -119,9 +116,10 @@ body {
 .btn:disabled { opacity:.5; cursor:not-allowed; }
 .btn.small { padding:2px 8px; font-size:12px; }
 
-/* 中间工作区（列头 + 滚动区，纵向排布） */
-.workspace { flex:1; display:flex; flex-direction:column; overflow:hidden; position:relative; background:#f0f1f4; }
-.scroll-area { flex:1; overflow-y:auto; overflow-x:hidden; position:relative; }
+/* 中间工作区：画板区（可缩放滚动）+ 参考图面板（贴右固定） */
+.workspace { flex:1; display:flex; overflow:hidden; position:relative; background:#f0f1f4; }
+.board-area { flex:1; min-width:0; position:relative; display:flex; flex-direction:column; }
+.scroll-area { flex:1; overflow:auto; position:relative; }
 .stage-wrap { position:relative; margin:24px auto 60px; width:fit-content; }
 .stage { position:relative; box-shadow:0 1px 4px rgba(16,24,40,.08), 0 8px 24px rgba(16,24,40,.06); background:#fff; }
 .stage.readonly::after { content:""; }
@@ -180,13 +178,13 @@ svg.links { position:absolute; inset:0; pointer-events:none; z-index:4; overflow
 
 /* 拖拽提示（scrollArea 也用 droppable） */
 .scroll-area.droppable { background:rgba(79,110,247,.05); }
-/* 参考图区 */
+/* 参考图面板（贴右固定，独立滚动） */
 .refcol {
-  position:absolute; top:0; z-index:6; width:300px;
+  flex:none; width:300px; position:relative; overflow-y:auto; overflow-x:hidden;
   border-left:1px dashed #d8dbe0; background:rgba(255,255,255,.8);
-  padding:12px 20px 12px 20px; min-height:100%;
+  padding:12px 20px;
 }
-.refcol .rt { font-size:12px; color:#8a8f98; margin-bottom:10px; }
+.refcol-inner { position:relative; width:100%; }
 .refcol.droppable { background:rgba(79,110,247,.07); }
 .ref-item { position:absolute; width:260px; text-align:center; cursor:move; }
 .ref-item img {
@@ -213,12 +211,25 @@ svg.links { position:absolute; inset:0; pointer-events:none; z-index:4; overflow
 .floatbar {
   position:absolute; bottom:18px; left:50%; transform:translateX(-50%); z-index:50;
   display:flex; align-items:center; gap:2px; padding:5px 8px;
-  background:rgba(255,255,255,.68);
-  -webkit-backdrop-filter:blur(16px) saturate(1.5);
-  backdrop-filter:blur(16px) saturate(1.5);
-  border:1px solid rgba(255,255,255,.65); border-radius:12px;
+  background:rgba(255,255,255,.55);
+  -webkit-backdrop-filter:blur(18px) saturate(1.6);
+  backdrop-filter:blur(18px) saturate(1.6);
+  border:1px solid rgba(255,255,255,.6); border-radius:12px;
   box-shadow:0 2px 8px rgba(16,24,40,.08), 0 12px 32px rgba(16,24,40,.14);
 }
+/* 缩放提示气泡（+/− 上方，可“不再提示”） */
+.zoom-hint {
+  position:absolute; bottom:calc(100% + 10px); right:104px; white-space:nowrap;
+  background:#1d2129; color:#fff; font-size:11px; padding:7px 10px; border-radius:8px;
+  opacity:0; pointer-events:none; transition:opacity .18s;
+  box-shadow:0 6px 20px rgba(16,24,40,.25);
+}
+.zoom-hint.show { opacity:1; pointer-events:auto; }
+.zoom-hint .zh-off {
+  border:none; background:none; color:#9aa0a8; font-size:11px; cursor:pointer;
+  margin-left:8px; padding:0; text-decoration:underline;
+}
+.zoom-hint .zh-off:hover { color:#fff; }
 .tool-btn {
   border:1px solid transparent; background:transparent; border-radius:8px;
   padding:6px 11px; cursor:pointer; font-size:13px; color:#3f454d;

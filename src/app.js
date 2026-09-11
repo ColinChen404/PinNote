@@ -42,7 +42,7 @@
   const REF_WIDTH = 260;
   const MARK_GAP = 24; // 画布与建议区间距
 
-  let root, sidebar, scrollArea, stageWrap, stage, overlay, svg, suggLayer, refCol, toolbar, saveStateEl;
+  let root, sidebar, scrollArea, stageWrap, stage, overlay, svg, suggLayer, refCol, refColInner, toolbar, saveStateEl;
 
   // ---------- 多图坐标工具 ----------
   function imgScale(i) { const im = state.images[i]; return im ? (im.displayW / im.naturalW) : 1; }
@@ -436,20 +436,31 @@
     if (state.images.length > 0) offY -= 12; // 最后一张不加间隙
   }
 
-  function setZoom(z, centerY) {
+  // anchor：{x,y} 视口坐标（Ctrl+滚轮=鼠标位置）；缺省以画板区中心为锚
+  function setZoom(z, anchor) {
     const nz = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, z));
     if (Math.abs(nz - state.zoom) < 0.001) return;
-    const oldH = canvasTotalH() || 1;
-    let ratio = null;
-    if (scrollArea && state.images.length) {
-      const cy = centerY != null ? centerY : (scrollArea.scrollTop + scrollArea.clientHeight / 2);
-      ratio = cy / Math.max(oldH, 1);
+    let ax = 0, ay = 0, vx = 0, vy = 0, oldW = 0, oldH = 0;
+    const sa = scrollArea;
+    if (sa && state.images.length) {
+      const r = sa.getBoundingClientRect();
+      if (anchor && anchor.x != null) {
+        vx = clamp(anchor.x - r.left, 0, sa.clientWidth);
+        vy = clamp(anchor.y - r.top, 0, sa.clientHeight);
+      } else {
+        vx = sa.clientWidth / 2; vy = sa.clientHeight / 2;
+      }
+      ax = sa.scrollLeft + vx; ay = sa.scrollTop + vy;
+      oldW = sa.scrollWidth; oldH = sa.scrollHeight;
     }
     state.zoom = nz;
     layoutCanvas();
     renderWorkspace();
-    if (ratio != null && scrollArea) {
-      scrollArea.scrollTop = ratio * canvasTotalH() - scrollArea.clientHeight / 2;
+    const sa2 = scrollArea;
+    if (sa2 && oldW) {
+      // 缩放后按内容坐标等比映射，保持锚点指的位置不动
+      sa2.scrollLeft = Math.max(0, ax * (sa2.scrollWidth / oldW) - vx);
+      sa2.scrollTop = Math.max(0, ay * (sa2.scrollHeight / oldH) - vy);
     }
     updateZoomLabel();
   }
@@ -551,13 +562,12 @@
   function renderWorkspaceEmpty() {
     const ws = $('.workspace');
     toolbar = null;
-    ws.innerHTML = '';
-    if (!state.project) {
-      ws.innerHTML = '<div class="empty-state"><div style="font-size:15px">新建或选择一个项目开始</div></div>';
-      updateExportBtn();
-      return;
-    }
-    // 空白项目/版本：上传投放区（上传按钮 + 拖拽 + Ctrl+V 粘贴）
+    ws.innerHTML = '<div class="empty-state"><div style="font-size:15px">新建或选择一个项目开始</div></div>';
+    updateExportBtn();
+  }
+
+  // 空白项目/版本：画板区显示上传投放区（上传按钮 + 拖拽 + Ctrl+V 粘贴）
+  function buildEmptyUpload() {
     const vName = state.version ? state.version.name : '';
     const drop = el('div', 'empty-upload');
     drop.innerHTML = `
@@ -576,14 +586,73 @@
         for (const f of files) await appendImageFromFile(f);
       });
     }
-    ws.appendChild(drop);
-    updateExportBtn();
+    return drop;
+  }
+
+  // 参考图面板：贴右固定、独立滚动，构建时绑定拖放并渲染已有参考图
+  function buildRefPanel() {
+    refCol = el('div', 'refcol');
+    refColInner = el('div', 'refcol-inner');
+    refCol.appendChild(refColInner);
+    bindRefDrop();
+    renderRefs();
+    return refCol;
+  }
+
+  function buildFloatbar() {
+    const fb = el('div', 'floatbar');
+    fb.innerHTML = `
+      <button type="button" class="tool-btn" data-tool="select" title="V - 选择/拖动"><img class="tool-ico" src="build-res/icons/mouse.png" alt=""/><span>鼠标</span></button>
+      <button type="button" class="tool-btn" data-tool="point" title="P - 点击创建点批注"><img class="tool-ico" src="build-res/icons/point.png" alt=""/><span>点批注</span></button>
+      <button type="button" class="tool-btn" data-tool="box" title="B - 拖拽创建框批注"><img class="tool-ico" src="build-res/icons/box.png" alt=""/><span>框批注</span></button>
+      <span class="sep"></span>
+      <button type="button" class="tool-btn zb" data-z="out" title="缩小 (-)">−</button>
+      <span class="zoom-label" id="zoom-label" title="点击重置为 100%">100%</span>
+      <button type="button" class="tool-btn zb" data-z="in" title="放大 (+)">+</button>
+      <span class="sep"></span>
+      <button type="button" class="tool-btn" id="zoom-fit" title="重置缩放"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M1 4V1h3M10 1h3v3M13 10v3h-3M4 13H1v-3"/></svg><span>适应</span></button>`;
+    fb.querySelectorAll('[data-tool]').forEach(b => { b.onclick = () => setTool(b.dataset.tool); });
+    fb.querySelector('[data-z="out"]').onclick = () => { showZoomHint(); setZoom(state.zoom / ZOOM_STEP); };
+    fb.querySelector('[data-z="in"]').onclick = () => { showZoomHint(); setZoom(state.zoom * ZOOM_STEP); };
+    $('.zoom-label', fb).onclick = () => setZoom(1);
+    $('#zoom-fit', fb).onclick = () => setZoom(1);
+    return fb;
+  }
+
+  // 缩放提示：点工具栏 +/- 时浮出；点“不再提示”或用过 Ctrl+滚轮 后永久消失
+  let zoomHintTimer = null;
+  function showZoomHint() {
+    let off = false;
+    try { off = localStorage.getItem('pinnote_zoom_hint_off') === '1'; } catch (e) {}
+    if (off || !toolbar) return;
+    let h = toolbar.querySelector('.zoom-hint');
+    if (!h) {
+      h = el('div', 'zoom-hint', 'Ctrl+滚轮：指哪儿放大哪儿<button type="button" class="zh-off">不再提示</button>');
+      toolbar.appendChild(h);
+      h.querySelector('.zh-off').onclick = (e) => {
+        e.stopPropagation();
+        try { localStorage.setItem('pinnote_zoom_hint_off', '1'); } catch (err) {}
+        h.classList.remove('show');
+      };
+    }
+    h.classList.add('show');
+    clearTimeout(zoomHintTimer);
+    zoomHintTimer = setTimeout(() => h.classList.remove('show'), 3500);
   }
 
   function renderWorkspace() {
     const ws = $('.workspace');
     ws.innerHTML = '';
-    if (!state.images.length) { renderWorkspaceEmpty(); return; }
+    if (!state.project) { renderWorkspaceEmpty(); return; }
+    if (!state.images.length) {
+      // 空白项目/版本：画板区显示上传投放区，右侧保留参考图面板
+      const board = el('div', 'board-area');
+      board.appendChild(buildEmptyUpload());
+      ws.appendChild(board);
+      ws.appendChild(buildRefPanel());
+      updateExportBtn();
+      return;
+    }
     layoutCanvas();
     updateZoomLabel();
     const totalH = canvasTotalH(), maxW = canvasMaxW();
@@ -625,45 +694,25 @@
     suggLayer.style.height = totalH + 'px';
     stageWrap.appendChild(stage);
     stageWrap.appendChild(suggLayer);
-
-    refCol = el('div', 'refcol');
-    refCol.style.left = (maxW + MARK_GAP + SUGG_WIDTH + MARK_GAP) + 'px';
-    refCol.style.height = totalH + 'px';
-    stageWrap.appendChild(refCol);
-
     scrollArea.appendChild(stageWrap);
 
-    const totalW = maxW + MARK_GAP + SUGG_WIDTH + MARK_GAP + 300 + 40;
-    stageWrap.style.width = totalW + 'px';
+    // 画板宽度 = 画布 + 间距 + 建议框列（参考图已独立为右侧面板，不随缩放）
+    stageWrap.style.width = (maxW + MARK_GAP + SUGG_WIDTH) + 'px';
 
-    ws.appendChild(scrollArea);
+    const board = el('div', 'board-area');
+    board.appendChild(scrollArea);
+    ws.appendChild(board);
+    ws.appendChild(buildRefPanel());
 
-    // 画布底部悬浮工具条
-    const fb = el('div', 'floatbar');
-    fb.innerHTML = `
-      <button type="button" class="tool-btn" data-tool="select" title="V - 选择/拖动"><img class="tool-ico" src="build-res/icons/mouse.png" alt=""/><span>鼠标</span></button>
-      <button type="button" class="tool-btn" data-tool="point" title="P - 点击创建点批注"><img class="tool-ico" src="build-res/icons/point.png" alt=""/><span>点批注</span></button>
-      <button type="button" class="tool-btn" data-tool="box" title="B - 拖拽创建框批注"><img class="tool-ico" src="build-res/icons/box.png" alt=""/><span>框批注</span></button>
-      <span class="sep"></span>
-      <button type="button" class="tool-btn zb" data-z="out" title="缩小 (-)">−</button>
-      <span class="zoom-label" id="zoom-label" title="点击重置为 100%">100%</span>
-      <button type="button" class="tool-btn zb" data-z="in" title="放大 (+)">+</button>
-      <span class="sep"></span>
-      <button type="button" class="tool-btn" id="zoom-fit" title="重置缩放"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M1 4V1h3M10 1h3v3M13 10v3h-3M4 13H1v-3"/></svg><span>适应</span></button>`;
-    fb.querySelectorAll('[data-tool]').forEach(b => { b.onclick = () => setTool(b.dataset.tool); });
-    fb.querySelector('[data-z="out"]').onclick = () => setZoom(state.zoom / ZOOM_STEP);
-    fb.querySelector('[data-z="in"]').onclick = () => setZoom(state.zoom * ZOOM_STEP);
-    $('.zoom-label', fb).onclick = () => setZoom(1);
-    $('#zoom-fit', fb).onclick = () => setZoom(1);
-    ws.appendChild(fb);
+    // 悬浮工具条：以画板区（不含参考图面板）为参照居中
+    const fb = buildFloatbar();
+    board.appendChild(fb);
     toolbar = fb;
 
     bindOverlayEvents();
-    bindRefDrop();
     bindCanvasDrop();
     renderMarks();
     renderSuggs();
-    renderRefs();
     layoutSuggs();
     drawLinks();
     updateExportBtn();
@@ -784,11 +833,14 @@
     // 调整 suggLayer 高度以容纳溢出内容
     const maxBottom = Math.max(cursor, canvasTotalH());
     suggLayer.style.height = maxBottom + 'px';
-    const stageH = Math.max(canvasTotalH(), maxBottom, refsBottom());
+    const stageH = Math.max(canvasTotalH(), maxBottom);
     stage.style.height = stageH + 'px';
     svg.setAttribute('height', stageH);
     svg.style.height = stageH + 'px';
-    refCol.style.height = stageH + 'px';
+    // 参考图面板内容高度：够高可滚动，不足则填满面板
+    if (refColInner) {
+      refColInner.style.height = Math.max(refsBottom() + 40, refCol.clientHeight || 0) + 'px';
+    }
     drawLinks();
   }
 
@@ -1048,14 +1100,15 @@
   // ---------- 参考图 ----------
   function renderRefs() {
     if (!refCol) return;
-    refCol.querySelectorAll('.ref-item,.ref-empty').forEach(n => n.remove());
+    const host = refColInner || refCol;
+    host.querySelectorAll('.ref-item,.ref-empty').forEach(n => n.remove());
     if (!state.refs.length) {
       const em = el('div', 'ref-empty');
       em.innerHTML = state.readOnly
         ? '<div class="re-plus">＋</div><div class="re-t">暂无参考图</div>'
         : '<div class="re-plus">＋</div><div class="re-t">拖入或粘贴参考图</div>';
       em.style.position = 'relative';
-      refCol.appendChild(em);
+      host.appendChild(em);
       return;
     }
     state.refs.forEach(r => {
@@ -1094,7 +1147,7 @@
         document.addEventListener('mousemove', move);
         document.addEventListener('mouseup', up);
       });
-      refCol.appendChild(item);
+      host.appendChild(item);
     });
   }
 
@@ -1108,12 +1161,13 @@
     refCol.addEventListener('dragleave', () => refCol.classList.remove('droppable'));
     refCol.addEventListener('drop', async (e) => {
       e.preventDefault();
-      e.stopPropagation(); // 阻止冒泡到 scrollArea，避免参考图同时被加进画布
+      e.stopPropagation();
       refCol.classList.remove('droppable');
       if (state.readOnly) return;
-      // 参考图放在鼠标松手位置（相对参考图区顶部）
-      const rect = refCol.getBoundingClientRect();
-      const dropTop = Math.max(0, Math.round(e.clientY - rect.top));
+      // 参考图放在鼠标松手位置（相对面板内容顶部，计入面板滚动量）
+      const host = refColInner || refCol;
+      const rect = host.getBoundingClientRect();
+      const dropTop = Math.max(0, Math.round(e.clientY - rect.top + refCol.scrollTop));
       const files = Array.from(e.dataTransfer.files || []).filter(f =>
         /\.(jpe?g|png|webp)$/i.test(f.name));
       for (const f of files) {
@@ -1273,11 +1327,17 @@
       else if (e.key === '0') setZoom(1);
     });
 
-    // Ctrl + 滚轮缩放（以鼠标位置为基准）
+    // Ctrl + 滚轮缩放：以鼠标位置为锚点，指哪儿放大哪儿（仅画板区内生效）
     document.addEventListener('wheel', (e) => {
-      if (!e.ctrlKey || !state.images.length) return;
+      if (!e.ctrlKey || !state.images.length || !scrollArea) return;
       e.preventDefault();
-      setZoom(state.zoom * (e.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP));
+      const r = scrollArea.getBoundingClientRect();
+      const inside = e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+      setZoom(state.zoom * (e.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP), inside ? { x: e.clientX, y: e.clientY } : null);
+      // 用过滚轮缩放即视为已掌握，自动永久关闭提示
+      try { localStorage.setItem('pinnote_zoom_hint_off', '1'); } catch (err) {}
+      const h = toolbar && toolbar.querySelector('.zoom-hint');
+      if (h) h.classList.remove('show');
     }, { passive: false });
 
     // Ctrl+V 粘贴图片：文本框内优先粘贴文字；有图片时拦截并路由

@@ -1,6 +1,6 @@
 {
   "name": "pinnote",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "PinNote - 在图片上打点/画框标注并写下修改建议，一键导出长页 PDF",
   "author": "Colin Chen",
   "license": "MIT",
