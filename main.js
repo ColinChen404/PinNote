@@ -106,6 +106,8 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
+      // 关闭后台节流：窗口被遮挡时 rAF/定时器照常跑（参考图面板的滚动同步泵依赖 rAF）
+      backgroundThrottling: false,
       // 冒烟测试用内存级会话：localStorage 与正式数据完全隔离
       //（曾发生 smoke 把"已读版本"写进真实存储，导致用户升级后不弹更新日志）
       partition: IS_SMOKE ? 'smoke-mem' : undefined
@@ -613,7 +615,9 @@ async function runSmoke() {
         });
         rpt('点标注落在第二张图', ptOnSecond);
 
-        // 参考图 drop 位置：模拟在 refCol 中部 drop，参考图应放在 drop 位置附近而非顶部
+        // 参考图 drop 位置：先回到画板顶部（标注聚焦会自动滚动画板），再模拟在 refCol 中部 drop
+        const saTop = document.querySelector('.scroll-area');
+        if (saTop) { saTop.scrollTop = 0; await new Promise(res => setTimeout(res, 250)); }
         const refCol = document.querySelector('.refcol');
         const refRect = refCol ? refCol.getBoundingClientRect() : null;
         if (refCol && refRect) {
@@ -623,10 +627,11 @@ async function runSmoke() {
           dt.items.add(new File([fbytes], 'ref_test.png', { type: 'image/png' }));
           refCol.dispatchEvent(new DragEvent('drop', { clientX: refRect.left + 50, clientY: refRect.top + dropY, dataTransfer: dt, bubbles: true }));
           await new Promise(res => setTimeout(res, 500));
-          const refItems = Array.from(document.querySelectorAll('.ref-item'));
-          const lastRef = refItems[refItems.length - 1];
-          const refTop = lastRef ? parseFloat(lastRef.style.top) : 0;
-          rpt('参考图放在 drop 位置', lastRef && Math.abs(refTop - dropY) < 80 && refTop > 50);
+        const refItems = Array.from(document.querySelectorAll('.ref-item'));
+        const lastRef = refItems[refItems.length - 1];
+        const refTop = lastRef ? parseFloat(lastRef.style.top) : 0;
+        const stRefsTop = JSON.stringify(((window.__pinTest.getState().refs) || []).map(r => r.top));
+        rpt('参考图放在 drop 位置(items=' + refItems.length + ' tops=' + stRefsTop + ')', lastRef && Math.abs(refTop - dropY) < 80 && refTop > 50);
         } else { rpt('参考图 drop 位置', true); }
 
         // 追加图片后保持滚动位置不弹回顶部
@@ -737,6 +742,17 @@ async function runSmoke() {
           await wait(500);
           st = window.__pinTest.getState();
           rpt('选择粘贴为设计稿生效', st.images.length === 2);
+        }
+
+        // 5.5) 画板与参考图面板滚动同步（内容高度对齐，任一侧滚动另一侧 1:1 跟随）
+        const saSync = document.querySelector('.scroll-area');
+        const rcSync = document.querySelector('.refcol');
+        const rcInner = document.querySelector('.refcol-inner');
+        if (saSync && rcSync) {
+          saSync.scrollTop = 500;
+          await wait(300);
+          const diag = 'sa=' + saSync.scrollTop + ' rc=' + rcSync.scrollTop + ' rcMax=' + (rcSync.scrollHeight - rcSync.clientHeight) + ' innerH=' + (rcInner ? rcInner.offsetHeight : -1);
+          rpt('画板与参考图滚动同步(' + diag + ')', Math.abs(rcSync.scrollTop - saSync.scrollTop) <= 2);
         }
 
         // 6) 删空画布 → 回到上传空状态

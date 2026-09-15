@@ -589,14 +589,46 @@
     return drop;
   }
 
-  // 参考图面板：贴右固定、独立滚动，构建时绑定拖放并渲染已有参考图
+  // 参考图面板：贴右固定、滚动跟随画板（自身无滚动条），构建时绑定拖放并渲染已有参考图
   function buildRefPanel() {
     refCol = el('div', 'refcol');
     refColInner = el('div', 'refcol-inner');
     refCol.appendChild(refColInner);
     bindRefDrop();
     renderRefs();
+    // 鼠标停在参考图面板上滚轮时，转发给画板滚动（随后由同步泵带动画板）
+    refCol.addEventListener('wheel', (e) => {
+      if (!scrollArea) return;
+      e.preventDefault();
+      scrollArea.scrollTop += e.deltaY;
+      scrollArea.scrollLeft += e.deltaX;
+    }, { passive: false });
     return refCol;
+  }
+
+  // 画板区与参考图面板滚动同步：内容高度一致，任一侧滚动另一侧 1:1 跟随。
+  // 用逐帧泵实现（scroll 事件方案在本环境有偶发丢失），每帧对比两侧位置，谁变了同步谁。
+  let syncPumpStarted = false, lastSaTop = -1, lastRcTop = -1;
+  function bindScrollSync() {
+    if (!scrollArea || !refCol) return;
+    lastSaTop = scrollArea.scrollTop;
+    lastRcTop = refCol.scrollTop;
+    if (syncPumpStarted) return;
+    syncPumpStarted = true;
+    const pump = () => {
+      const sa = scrollArea, rc = refCol;
+      if (sa && rc && sa.scrollHeight > sa.clientHeight) {
+        if (sa.scrollTop !== lastSaTop) {
+          lastSaTop = sa.scrollTop;
+          if (rc.scrollTop !== lastSaTop) { rc.scrollTop = lastSaTop; lastRcTop = lastSaTop; }
+        } else if (rc.scrollTop !== lastRcTop) {
+          lastRcTop = rc.scrollTop;
+          if (sa.scrollTop !== lastRcTop) { sa.scrollTop = lastRcTop; lastSaTop = lastRcTop; }
+        }
+      }
+      requestAnimationFrame(pump);
+    };
+    requestAnimationFrame(pump);
   }
 
   function buildFloatbar() {
@@ -715,6 +747,7 @@
     renderSuggs();
     layoutSuggs();
     drawLinks();
+    bindScrollSync();
     updateExportBtn();
   }
 
@@ -837,9 +870,9 @@
     stage.style.height = stageH + 'px';
     svg.setAttribute('height', stageH);
     svg.style.height = stageH + 'px';
-    // 参考图面板内容高度：够高可滚动，不足则填满面板
-    if (refColInner) {
-      refColInner.style.height = Math.max(refsBottom() + 40, refCol.clientHeight || 0) + 'px';
+    // 参考图面板内容高度与画板区内容高度对齐（含画布上下留白），滚动 1:1 同步才不漂移
+    if (refColInner && scrollArea) {
+      refColInner.style.height = Math.max(scrollArea.scrollHeight - 22, refsBottom() + 40, refCol.clientHeight || 0) + 'px';
     }
     drawLinks();
   }

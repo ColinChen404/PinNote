@@ -178,9 +178,9 @@ svg.links { position:absolute; inset:0; pointer-events:none; z-index:4; overflow
 
 /* 拖拽提示（scrollArea 也用 droppable） */
 .scroll-area.droppable { background:rgba(79,110,247,.05); }
-/* 参考图面板（贴右固定，独立滚动） */
+/* 参考图面板（贴右固定，滚动跟随画板，自身不出滚动条） */
 .refcol {
-  flex:none; width:320px; position:relative; overflow-y:auto; overflow-x:hidden;
+  flex:none; width:320px; position:relative; overflow:hidden;
   border-left:1px dashed #d8dbe0; background:rgba(255,255,255,.8);
   padding:12px 10px;
 }
