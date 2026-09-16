@@ -237,6 +237,18 @@ svg.links { position:absolute; inset:0; pointer-events:none; z-index:4; overflow
 .cursor-boxhint {
   position:fixed; z-index:500; pointer-events:none; width:26px; height:20px; display:none;
 }
+/* 常驻快捷操作提示（可“不再提示”） */
+.quick-hint {
+  position:absolute; bottom:calc(100% + 10px); left:50%; transform:translateX(-50%); white-space:nowrap;
+  background:#1d2129; color:#fff; font-size:11px; padding:7px 12px; border-radius:8px;
+  display:none; box-shadow:0 6px 20px rgba(16,24,40,.25);
+}
+.quick-hint.show { display:block; }
+.hint-off {
+  border:none; background:none; color:#9aa0a8; font-size:11px; cursor:pointer;
+  margin-left:8px; padding:0; text-decoration:underline;
+}
+.hint-off:hover { color:#fff; }
 .cursor-boxhint i { position:absolute; width:8px; height:8px; border:1.5px solid rgba(191,77,85,.6); }
 .cursor-boxhint i:nth-child(1) { left:0; top:0; border-right:none; border-bottom:none; }
 .cursor-boxhint i:nth-child(2) { right:0; top:0; border-left:none; border-bottom:none; }
@@ -252,7 +264,7 @@ svg.links { position:absolute; inset:0; pointer-events:none; z-index:4; overflow
 .tool-btn {
   border:1px solid transparent; background:transparent; border-radius:8px;
   padding:6px 11px; cursor:pointer; font-size:13px; color:#3f454d;
-  display:inline-flex; align-items:center; gap:6px;
+  display:inline-flex; align-items:center; gap:6px; white-space:nowrap; flex:none;
 }
 .tool-btn:hover { background:#f2f3f5; }
 .tool-btn.active { background:#eef1fe; color:#4f6ef7; }

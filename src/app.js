@@ -222,6 +222,9 @@
       b.classList.toggle('active', b.dataset.tool === state.pendingTool);
       b.disabled = state.readOnly;
     });
+    // 常驻快捷操作提示：一次性工具武装期间让位，恢复默认后继续显示
+    const qh = toolbar.querySelector('.quick-hint');
+    if (qh) qh.classList.toggle('show', !state.pendingTool);
   }
 
   // ---------- 工具状态：默认=选择/移动；点/框为一次性武装，完成一次即回默认 ----------
@@ -261,35 +264,22 @@
     updateCursorFollowers(null);
   }
 
-  // 光标跟随物：点=小图钉（针尖即落点）；框=细十字旁的小四角框
-  let pinEl = null, boxHintEl = null;
+  // 光标跟随物：点=小图钉（针尖即落点）；框=仅十字光标（无跟随物）
+  let pinEl = null;
   function updateCursorFollowers(e) {
     const pending = state.pendingTool;
-    if (!pending || !e) { hideCursorFollowers(); return; }
-    if (pending === 'point') {
-      if (!pinEl) {
-        pinEl = el('div', 'cursor-pin', '<svg width="18" height="24" viewBox="0 0 18 24"><circle cx="9" cy="6" r="5.5" fill="#bf4d55" stroke="#fff" stroke-width="1.5"/><path d="M9 12v10" stroke="#bf4d55" stroke-width="2" stroke-linecap="round"/></svg>');
-        document.body.appendChild(pinEl);
-      }
-      pinEl.style.display = 'block';
-      pinEl.style.left = e.clientX + 'px';
-      pinEl.style.top = e.clientY + 'px';
-      if (boxHintEl) boxHintEl.style.display = 'none';
-    } else {
-      if (!boxHintEl) {
-        boxHintEl = el('div', 'cursor-boxhint', '<i></i><i></i><i></i><i></i>');
-        document.body.appendChild(boxHintEl);
-      }
-      boxHintEl.style.display = 'block';
-      boxHintEl.style.left = (e.clientX + 14) + 'px';
-      boxHintEl.style.top = (e.clientY + 14) + 'px';
-      if (pinEl) pinEl.style.display = 'none';
+    if (pending !== 'point' || !e) { hideCursorFollowers(); return; }
+    if (!pinEl) {
+      pinEl = el('div', 'cursor-pin', '<svg width="18" height="24" viewBox="0 0 18 24"><circle cx="9" cy="6" r="5.5" fill="#bf4d55" stroke="#fff" stroke-width="1.5"/><path d="M9 12v10" stroke="#bf4d55" stroke-width="2" stroke-linecap="round"/></svg>');
+      document.body.appendChild(pinEl);
     }
+    pinEl.style.display = 'block';
+    pinEl.style.left = e.clientX + 'px';
+    pinEl.style.top = e.clientY + 'px';
   }
 
   function hideCursorFollowers() {
     if (pinEl) pinEl.style.display = 'none';
-    if (boxHintEl) boxHintEl.style.display = 'none';
   }
 
   // 状态提示：悬浮工具条上方的小气泡，不弹窗、不遮画布
@@ -729,6 +719,18 @@
     fb.querySelector('[data-z="in"]').onclick = () => { showZoomHint(); setZoom(state.zoom * ZOOM_STEP); };
     $('.zoom-label', fb).onclick = () => setZoom(1);
     $('#zoom-fit', fb).onclick = () => setZoom(1);
+    // 常驻快捷操作提示（点“不再提示”后永久消失）
+    let qhOff = false;
+    try { qhOff = localStorage.getItem('pinnote_quickhint_off') === '1'; } catch (e) {}
+    if (!qhOff) {
+      const qh = el('div', 'quick-hint', '快捷操作：左键双击打点；右键拖动框选<button type="button" class="hint-off">不再提示</button>');
+      fb.appendChild(qh);
+      qh.querySelector('.hint-off').onclick = (e) => {
+        e.stopPropagation();
+        try { localStorage.setItem('pinnote_quickhint_off', '1'); } catch (err) {}
+        qh.classList.remove('show');
+      };
+    }
     return fb;
   }
 
@@ -1027,6 +1029,8 @@
     ghost.dataset.ghost = '1';
     stage.appendChild(ghost);
     dragCtx.ghost = ghost;
+    // 捕获指针：即使鼠标在窗口外松手也能收到结束事件，避免虚线框卡在画布上
+    try { if (e.pointerId != null) overlay.setPointerCapture(e.pointerId); } catch (err) {}
     hideCursorFollowers(); // 开始拖动后跟随物消失，只显示真实框选范围
     e.preventDefault();
   }
@@ -1198,7 +1202,8 @@
   document.addEventListener('mouseup', () => {
     if (!dragCtx) return;
     if (dragCtx.kind === 'draw') {
-      if (dragCtx.ghost) dragCtx.ghost.remove();
+      // 兜底清理所有残留虚线框（异常中断可能留下 ghost）
+      stage.querySelectorAll('[data-ghost="1"]').forEach(g => g.remove());
       const c = dragCtx.cur;
       if (c && c.w > 8 && c.h > 8) {
         // 以框中心判定所属图片，并把框限制在该图片范围内
