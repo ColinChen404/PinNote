@@ -61,13 +61,15 @@ PinNote 最初要解决的问题特别小：怎么给一张电商详情页提修
 
 | 快捷键 | 功能 |
 | --- | --- |
-| Q | 鼠标（选择 / 拖动） |
-| W | 点批注 |
-| E | 框批注 |
+| Q | 点批注（一次性） |
+| W | 框批注（一次性） |
+| E | 取消 / 恢复默认鼠标 |
+| 双击左键 | 快捷点批注 |
+| 右键拖动 | 快捷框批注 |
 | Ctrl+V | 粘贴图片 |
 | Ctrl+S | 保存 |
 | Delete | 删除选中标注 |
-| Esc | 关闭弹窗 / 退出工具 |
+| Esc | 关闭弹窗 / 取消工具 |
 | Ctrl+滚轮 / + / − / 0 | 缩放 / 重置缩放 |
 
 ### 数据与隐私
@@ -142,13 +144,15 @@ Unfortunately, I couldn't code.
 
 | Key | Action |
 | --- | --- |
-| Q | Mouse (select / drag) |
-| W | Pin annotation |
-| E | Box annotation |
+| Q | Pin annotation (one-shot) |
+| W | Box annotation (one-shot) |
+| E | Cancel / back to default |
+| Double-click | Quick pin annotation |
+| Right-drag | Quick box annotation |
 | Ctrl+V | Paste image |
 | Ctrl+S | Save |
 | Delete | Delete selected annotation |
-| Esc | Close dialog / exit tool |
+| Esc | Close dialog / cancel tool |
 | Ctrl+Wheel / + / − / 0 | Zoom / reset zoom |
 
 ### Data & Privacy

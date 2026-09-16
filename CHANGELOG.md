@@ -2,6 +2,30 @@
 
 本文件记录 PinNote 的所有重要变更。/ All notable changes to PinNote are documented here.
 
+## v1.5.0 · 2026-09-11
+
+- 交互重构：默认即选择/移动——双击左键打点、右键拖动框选，无需先切换工具
+- 点批注/框批注按钮改为一次性操作：完成一次自动回默认，配图钉/四角框光标跟随与状态提示
+- 快捷键：Q 点批注（一次性）、W 框批注（一次性）、E 取消恢复默认
+- 移除：画布双击追加图片（改用顶栏「添加设计稿」或直接拖拽图片进画板）
+- 修复：参考图面板与画板滚动不同步——现在视觉分离、滚动同步；参考图面板不再显示独立滚动条
+
+> English
+> - Interaction rework: select/move is the default — double-click to pin, right-drag to box, no tool switching needed
+> - The pin/box buttons are now one-shot: arm, place once with cursor guides and a status hint, then back to default
+> - Shortcuts: Q pin (one-shot), W box (one-shot), E cancel
+> - Removed: double-click-to-append image (use the toolbar button or drag & drop)
+> - Fixed: the reference panel now scrolls in sync with the board; its separate scrollbar is gone
+
+## v1.4.0 · 2026-09-10
+
+- 布局重构：无边框标题栏，保存/导出/归档移至顶栏，批注工具移至画布底部毛玻璃悬浮工具条
+- 建议框与参考图改为白色卡片配质感阴影
+- 左侧项目栏支持收起/展开（默认展开）
+- 全新应用图标与批注工具图标；批注配色调整为低饱和质感红
+- 顶栏「…」菜单：更新日志 / 快捷键说明 / 关于；升级后首次打开只展示本轮更新
+- ❤️ 特别鸣谢：ChatGPT image 2.5 的平面设计支持
+
 ## v1.3.0 · 2026-09-11
 
 - 换掉丑陋的微软雅黑字体：全应用与导出 PDF 改用 **Noto Sans SC**（思源黑体同源设计，SIL OFL 免费商用），界面更清爽现代

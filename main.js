@@ -559,7 +559,7 @@ async function runSmoke() {
         // 连线存在性（此前 layoutSuggs 崩溃导致连线从不绘制）
         await new Promise(r => setTimeout(r, 300));
         const lineCount = document.querySelectorAll('svg.links line').length;
-        rpt('标注↔建议框连线已绘制', lineCount >= 3);
+        rpt('标注↔建议框连线已绘制(线=' + lineCount + ' 标注=' + document.querySelectorAll('.mark-point,.mark-box').length + ')', lineCount >= 3);
 
         // 建议框布局（位置被设置且不叠在顶部同一位置）
         const suggEls = Array.from(document.querySelectorAll('.sugg'));
@@ -754,6 +754,37 @@ async function runSmoke() {
           const diag = 'sa=' + saSync.scrollTop + ' rc=' + rcSync.scrollTop + ' rcMax=' + (rcSync.scrollHeight - rcSync.clientHeight) + ' innerH=' + (rcInner ? rcInner.offsetHeight : -1);
           rpt('画板与参考图滚动同步(' + diag + ')', Math.abs(rcSync.scrollTop - saSync.scrollTop) <= 2);
         }
+
+        // 5.6) 交互模型：默认双击建点 / 右键拖动建框 / 一次性工具 / 防连击
+        const ovI = document.querySelector('.overlay');
+        const rI = ovI.getBoundingClientRect();
+        const ptsBefore = document.querySelectorAll('.mark-point').length;
+        ovI.dispatchEvent(new MouseEvent('dblclick', { bubbles: true, clientX: rI.left + 300, clientY: rI.top + 700 }));
+        await wait(200);
+        rpt('默认双击创建点批注', document.querySelectorAll('.mark-point').length === ptsBefore + 1);
+
+        const boxesBefore = document.querySelectorAll('.mark-box').length;
+        ovI.dispatchEvent(new MouseEvent('mousedown', { button: 2, buttons: 2, bubbles: true, clientX: rI.left + 100, clientY: rI.top + 1100 }));
+        document.dispatchEvent(new MouseEvent('mousemove', { buttons: 2, bubbles: true, clientX: rI.left + 260, clientY: rI.top + 1300 }));
+        document.dispatchEvent(new MouseEvent('mouseup', { button: 2, bubbles: true, clientX: rI.left + 260, clientY: rI.top + 1300 }));
+        await wait(200);
+        rpt('右键拖动创建框批注', document.querySelectorAll('.mark-box').length === boxesBefore + 1);
+
+        document.querySelector('[data-tool="point"]').click();
+        rpt('点批注按钮进入待放置', window.__pinTest.getState().pendingTool === 'point');
+        ovI.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true, clientX: rI.left + 300, clientY: rI.top + 900 }));
+        await wait(150);
+        rpt('点批注一次性消耗并回默认', window.__pinTest.getState().pendingTool === null && document.querySelectorAll('.mark-point').length === ptsBefore + 2);
+        ovI.dispatchEvent(new MouseEvent('dblclick', { bubbles: true, clientX: rI.left + 300, clientY: rI.top + 950 }));
+        await wait(150);
+        rpt('双击防连击不再加第二个点', document.querySelectorAll('.mark-point').length === ptsBefore + 2);
+
+        document.querySelector('[data-tool="box"]').click();
+        rpt('框批注按钮进入待绘制', window.__pinTest.getState().pendingTool === 'box');
+        ovI.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true, clientX: rI.left + 120, clientY: rI.top + 1500 }));
+        document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, clientX: rI.left + 120, clientY: rI.top + 1500 }));
+        await wait(150);
+        rpt('框待绘制单击不建框并回默认', window.__pinTest.getState().pendingTool === null && document.querySelectorAll('.mark-box').length === boxesBefore + 1);
 
         // 6) 删空画布 → 回到上传空状态
         for (let k = 0; k < 3; k++) {

@@ -124,8 +124,9 @@ body {
 .stage { position:relative; box-shadow:0 1px 4px rgba(16,24,40,.08), 0 8px 24px rgba(16,24,40,.06); background:#fff; }
 .stage.readonly::after { content:""; }
 .stage img.detail-img { display:block; pointer-events:none; }
-.overlay { position:absolute; inset:0; cursor:crosshair; }
-.overlay.tool-select { cursor:default; }
+.overlay { position:absolute; inset:0; cursor:default; }
+.overlay.tool-box { cursor:crosshair; }
+.overlay.tool-point { cursor:none; }
 .stage.readonly .overlay { pointer-events:none; }
 
 .mark-point {
@@ -227,6 +228,21 @@ svg.links { position:absolute; inset:0; pointer-events:none; z-index:4; overflow
   opacity:0; pointer-events:none; transition:opacity .18s;
   box-shadow:0 6px 20px rgba(16,24,40,.25);
 }
+.tool-hint.show { display:block; }
+/* 光标跟随物：点=小图钉（针尖即落点）；框=半透明四角框 */
+.cursor-pin {
+  position:fixed; z-index:500; pointer-events:none; display:none;
+  transform:translate(-50%,-100%);
+}
+.cursor-boxhint {
+  position:fixed; z-index:500; pointer-events:none; width:26px; height:20px; display:none;
+}
+.cursor-boxhint i { position:absolute; width:8px; height:8px; border:1.5px solid rgba(191,77,85,.6); }
+.cursor-boxhint i:nth-child(1) { left:0; top:0; border-right:none; border-bottom:none; }
+.cursor-boxhint i:nth-child(2) { right:0; top:0; border-left:none; border-bottom:none; }
+.cursor-boxhint i:nth-child(3) { left:0; bottom:0; border-right:none; border-top:none; }
+.cursor-boxhint i:nth-child(4) { right:0; bottom:0; border-left:none; border-top:none; }
+/* 缩放提示气泡（+/− 上方，可“不再提示”） */
 .zoom-hint.show { opacity:1; pointer-events:auto; }
 .zoom-hint .zh-off {
   border:none; background:none; color:#9aa0a8; font-size:11px; cursor:pointer;

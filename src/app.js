@@ -24,7 +24,7 @@
     marks: [],              // [{id,type:'point'|'box',x,y,w,h,imgIndex}]
     sugg: {},               // markId -> { id, text, top } (top 为显示坐标)
     refs: [],               // [{id,path,dataUrl,label,top,h}]
-    tool: 'select',         // select|point|box
+    pendingTool: null,      // null | 'point' | 'box'（一次性工具，完成一次即回默认）
     selected: null,         // markId
     editing: null,          // markId
     readOnly: false,
@@ -219,16 +219,95 @@
   function refreshToolButtons() {
     if (!toolbar) return;
     toolbar.querySelectorAll('[data-tool]').forEach(b => {
-      b.classList.toggle('active', b.dataset.tool === state.tool);
-      b.disabled = state.readOnly && b.dataset.tool !== 'select';
+      b.classList.toggle('active', b.dataset.tool === state.pendingTool);
+      b.disabled = state.readOnly;
     });
   }
 
-  function setTool(t) {
-    if (state.readOnly) t = 'select';
-    state.tool = t;
-    if (overlay) overlay.className = 'overlay' + (t === 'select' ? ' tool-select' : '');
+  // ---------- 工具状态：默认=选择/移动；点/框为一次性武装，完成一次即回默认 ----------
+  let suppressDblPointUntil = 0;
+
+  function updateOverlayCursor() {
+    if (!overlay) return;
+    overlay.classList.toggle('tool-point', state.pendingTool === 'point');
+    overlay.classList.toggle('tool-box', state.pendingTool === 'box');
+  }
+
+  function armPending(tool) {
+    if (state.readOnly || !state.images.length) return;
+    state.pendingTool = state.pendingTool === tool ? null : tool; // 再点同一按钮=取消
+    updateOverlayCursor();
     refreshToolButtons();
+    showToolHint();
+    updateCursorFollowers(null);
+  }
+
+  function cancelPending() {
+    if (dragCtx && dragCtx.kind === 'draw') cancelDraw();
+    if (!state.pendingTool) { updateOverlayCursor(); return; }
+    state.pendingTool = null;
+    updateOverlayCursor();
+    refreshToolButtons();
+    hideToolHint();
+    updateCursorFollowers(null);
+  }
+
+  function consumePending() {
+    suppressDblPointUntil = Date.now() + 450; // 防双击产生第二个点
+    state.pendingTool = null;
+    updateOverlayCursor();
+    refreshToolButtons();
+    hideToolHint();
+    updateCursorFollowers(null);
+  }
+
+  // 光标跟随物：点=小图钉（针尖即落点）；框=细十字旁的小四角框
+  let pinEl = null, boxHintEl = null;
+  function updateCursorFollowers(e) {
+    const pending = state.pendingTool;
+    if (!pending || !e) { hideCursorFollowers(); return; }
+    if (pending === 'point') {
+      if (!pinEl) {
+        pinEl = el('div', 'cursor-pin', '<svg width="18" height="24" viewBox="0 0 18 24"><circle cx="9" cy="6" r="5.5" fill="#bf4d55" stroke="#fff" stroke-width="1.5"/><path d="M9 12v10" stroke="#bf4d55" stroke-width="2" stroke-linecap="round"/></svg>');
+        document.body.appendChild(pinEl);
+      }
+      pinEl.style.display = 'block';
+      pinEl.style.left = e.clientX + 'px';
+      pinEl.style.top = e.clientY + 'px';
+      if (boxHintEl) boxHintEl.style.display = 'none';
+    } else {
+      if (!boxHintEl) {
+        boxHintEl = el('div', 'cursor-boxhint', '<i></i><i></i><i></i><i></i>');
+        document.body.appendChild(boxHintEl);
+      }
+      boxHintEl.style.display = 'block';
+      boxHintEl.style.left = (e.clientX + 14) + 'px';
+      boxHintEl.style.top = (e.clientY + 14) + 'px';
+      if (pinEl) pinEl.style.display = 'none';
+    }
+  }
+
+  function hideCursorFollowers() {
+    if (pinEl) pinEl.style.display = 'none';
+    if (boxHintEl) boxHintEl.style.display = 'none';
+  }
+
+  // 状态提示：悬浮工具条上方的小气泡，不弹窗、不遮画布
+  function showToolHint() {
+    if (!toolbar) return;
+    const text = state.pendingTool === 'point' ? '点击设计稿放置 · Esc 取消' : '拖动框选范围 · Esc 取消';
+    let h = toolbar.querySelector('.tool-hint');
+    if (!h) {
+      h = el('div', 'tool-hint');
+      toolbar.appendChild(h);
+    }
+    h.textContent = text;
+    h.classList.add('show');
+  }
+
+  function hideToolHint() {
+    const h = toolbar && toolbar.querySelector('.tool-hint');
+    if (h) h.classList.remove('show');
   }
 
   // ---------- 侧边栏 ----------
@@ -341,6 +420,7 @@
 
   async function loadVersionData() {
     const v = state.version;
+    cancelPending(); // 切换项目/版本时取消未完成的工具操作
     state.marks = (v.marks || []).map(m => ({ ...m }));
     state.sugg = {};
     Object.keys(v.suggestions || {}).forEach(k => {
@@ -552,7 +632,7 @@
     if (!state.project) return;
     state.project.archived = !state.project.archived;
     state.readOnly = state.project.archived;
-    if (state.readOnly) { state.tool = 'select'; state.selected = null; state.editing = null; }
+    if (state.readOnly) { cancelPending(); state.selected = null; state.editing = null; }
     await doSave();
     state.manifest = await api.getManifest();
     renderSidebar(); renderToolbar(); renderWorkspace();
@@ -634,16 +714,17 @@
   function buildFloatbar() {
     const fb = el('div', 'floatbar');
     fb.innerHTML = `
-      <button type="button" class="tool-btn" data-tool="select" title="Q - 选择/拖动"><img class="tool-ico" src="build-res/icons/mouse.png" alt=""/><span>鼠标</span></button>
-      <button type="button" class="tool-btn" data-tool="point" title="W - 点击创建点批注"><img class="tool-ico" src="build-res/icons/point.png" alt=""/><span>点批注</span></button>
-      <button type="button" class="tool-btn" data-tool="box" title="E - 拖拽创建框批注"><img class="tool-ico" src="build-res/icons/box.png" alt=""/><span>框批注</span></button>
+      <button type="button" class="tool-btn" data-tool="point" title="Q - 点击后放一个点批注（一次性）"><img class="tool-ico" src="build-res/icons/point.png" alt=""/><span>点批注</span></button>
+      <button type="button" class="tool-btn" data-tool="box" title="W - 点击后拖拽框选（一次性）"><img class="tool-ico" src="build-res/icons/box.png" alt=""/><span>框批注</span></button>
       <span class="sep"></span>
       <button type="button" class="tool-btn zb" data-z="out" title="缩小 (-)">−</button>
       <span class="zoom-label" id="zoom-label" title="点击重置为 100%">100%</span>
       <button type="button" class="tool-btn zb" data-z="in" title="放大 (+)">+</button>
       <span class="sep"></span>
       <button type="button" class="tool-btn" id="zoom-fit" title="重置缩放"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M1 4V1h3M10 1h3v3M13 10v3h-3M4 13H1v-3"/></svg><span>适应</span></button>`;
-    fb.querySelectorAll('[data-tool]').forEach(b => { b.onclick = () => setTool(b.dataset.tool); });
+    fb.querySelectorAll('[data-tool]').forEach(b => {
+      b.onclick = () => armPending(b.dataset.tool === 'point' ? 'point' : 'box');
+    });
     fb.querySelector('[data-z="out"]').onclick = () => { showZoomHint(); setZoom(state.zoom / ZOOM_STEP); };
     fb.querySelector('[data-z="in"]').onclick = () => { showZoomHint(); setZoom(state.zoom * ZOOM_STEP); };
     $('.zoom-label', fb).onclick = () => setZoom(1);
@@ -715,7 +796,7 @@
     svg.setAttribute('width', maxW);
     svg.setAttribute('height', totalH);
     stage.appendChild(svg);
-    overlay = el('div', 'overlay' + (state.tool === 'select' ? ' tool-select' : ''));
+    overlay = el('div', 'overlay');
     overlay.style.width = maxW + 'px'; overlay.style.height = totalH + 'px';
     stage.appendChild(overlay);
     suggLayer = el('div');
@@ -888,48 +969,69 @@
 
   function bindOverlayEvents() {
     if (!overlay) return;
+    updateOverlayCursor();
+    // 画布区域屏蔽右键菜单（右键拖动用于框批注快捷操作）
+    stage.addEventListener('contextmenu', (e) => e.preventDefault());
     overlay.addEventListener('mousedown', (e) => {
       if (state.readOnly) return;
       const p = stagePointFromEvent(e);
-      if (state.tool === 'point') {
+      if (e.button === 2) {
+        // 右键拖动 = 快捷框批注（默认态与待绘制态均生效）；待放置的点工具随即取消
+        if (state.pendingTool === 'point') consumePending();
+        startBoxDraw(e, p);
+        return;
+      }
+      if (e.button !== 0) return;
+      if (state.pendingTool === 'point') {
         const imgIdx = imageAtY(p.y);
         const im = state.images[imgIdx], s = imgScale(imgIdx);
         addMark({ type: 'point',
           x: clamp(p.x / s, 0, im.naturalW),
           y: clamp((p.y - im.offsetY) / s, 0, im.naturalH),
           imgIndex: imgIdx });
-      } else if (state.tool === 'box') {
-        dragCtx = { kind: 'draw', startX: p.x, startY: p.y, cur: null };
-        const ghost = el('div', 'mark-box');
-        ghost.style.borderStyle = 'dashed';
-        ghost.dataset.ghost = '1';
-        stage.appendChild(ghost);
-        dragCtx.ghost = ghost;
-        e.preventDefault();
-      } else {
-        selectMark(null);
+        consumePending(); // 一次性：用完即回默认
+        return;
       }
+      if (state.pendingTool === 'box') {
+        startBoxDraw(e, p);
+        return;
+      }
+      // 默认态：空白处单击=取消选择（点批注刚消耗时忽略，防双击第二击误触）
+      if (Date.now() < suppressDblPointUntil) return;
+      selectMark(null);
     });
-    overlay.addEventListener('dblclick', () => {
-      // 仅选择工具下双击才追加图片，避免与点/框工具冲突
-      if (state.readOnly || state.tool !== 'select') return;
-      replaceDetailImage();
+    overlay.addEventListener('mousemove', (e) => {
+      if (state.pendingTool) updateCursorFollowers(e);
+    });
+    overlay.addEventListener('mouseleave', () => updateCursorFollowers(null));
+    overlay.addEventListener('dblclick', (e) => {
+      if (state.readOnly) return;
+      if (state.pendingTool === 'box') return;        // 框待绘制：双击不建框、不打点
+      if (Date.now() < suppressDblPointUntil) return; // 点批注刚放置：防双击第二个点
+      // 默认态双击 = 快捷点批注（原“双击追加图片”已移除，改用顶栏按钮或拖拽）
+      const p = stagePointFromEvent(e);
+      const imgIdx = imageAtY(p.y);
+      const im = state.images[imgIdx], s = imgScale(imgIdx);
+      addMark({ type: 'point',
+        x: clamp(p.x / s, 0, im.naturalW),
+        y: clamp((p.y - im.offsetY) / s, 0, im.naturalH),
+        imgIndex: imgIdx });
+      scheduleSave();
     });
   }
 
-  async function replaceDetailImage() {
-    const ir = await api.importDetailAppend(state.project.id, state.version.id, null);
-    if (ir.ok) {
-      try {
-        await pushImagePath(ir.path);
-      } catch (e) {
-        alert('图片加载失败: ' + e.message);
-        return;
-      }
-      await doSave();
-      renderWorkspace();
-    }
+  function startBoxDraw(e, p) {
+    dragCtx = { kind: 'draw', startX: p.x, startY: p.y, cur: null, button: e.button };
+    const ghost = el('div', 'mark-box');
+    ghost.style.borderStyle = 'dashed';
+    ghost.dataset.ghost = '1';
+    stage.appendChild(ghost);
+    dragCtx.ghost = ghost;
+    hideCursorFollowers(); // 开始拖动后跟随物消失，只显示真实框选范围
+    e.preventDefault();
   }
+
+  // 双击追加图片功能已移除（v1.5.0：双击改为快捷点批注），追加请用顶栏按钮或拖拽
 
   // 重渲染并保持滚动位置（追加图片后不弹回顶部）
   function rerenderKeepScroll() {
@@ -1026,6 +1128,7 @@
   function bindMarkEvents(n, m) {
     n.addEventListener('mousedown', (e) => {
       if (state.readOnly) return;
+      if (e.button !== 0) return; // 右键留给画布的快捷框批注
       e.stopPropagation();
       selectMark(m.id);
       const p = stagePointFromEvent(e);
@@ -1110,6 +1213,8 @@
           addMark({ type: 'box', x: x1 / s, y: (y1 - im.offsetY) / s, w: wn, h: hn, imgIndex: imgIdx });
         }
       }
+      // 一次性框工具：无论是否成框，松手即回默认
+      if (state.pendingTool === 'box') consumePending();
     } else {
       scheduleSave();
     }
@@ -1334,7 +1439,7 @@
         const mask = document.querySelector('.modal-mask');
         if (mask) { mask.remove(); return; } // Esc 关闭弹窗/粘贴选择/更新日志
         if (inInput) { e.target.blur(); state.editing = null; }
-        setTool('select');
+        cancelPending(); // 取消一次性工具，恢复默认
         selectMark(null);
         return;
       }
@@ -1352,10 +1457,10 @@
         return;
       }
       const k = e.key.toLowerCase();
-      if (e.ctrlKey || e.metaKey || e.altKey) return; // 组合键不触发工具切换（如 Ctrl+V 粘贴）
-      if (k === 'q') setTool('select');
-      else if (k === 'w') setTool('point');
-      else if (k === 'e') setTool('box');
+      if (e.ctrlKey || e.metaKey || e.altKey) return; // 组合键不触发工具（如 Ctrl+V 粘贴）
+      if (k === 'q') armPending('point');       // 点批注（一次性）
+      else if (k === 'w') armPending('box');    // 框批注（一次性）
+      else if (k === 'e') cancelPending();      // 取消，恢复默认
       else if (e.key === '+' || e.key === '=') setZoom(state.zoom * ZOOM_STEP);
       else if (e.key === '-' || e.key === '_') setZoom(state.zoom / ZOOM_STEP);
       else if (e.key === '0') setZoom(1);

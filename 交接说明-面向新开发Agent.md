@@ -62,6 +62,7 @@
 - `state.marks[]` —— 标注点/框，每条标注带 `imgIndex` 指明属于哪张图。
 - `state.zoom` —— 缩放因子（0.2~4，步进 1.25），每张图显示尺寸 = 基准宽度 × zoom。
 - `state.refs[]` / `state.suggPositions` —— 参考示例图与建议框位置。
+- `state.pendingTool` —— **一次性工具瞬态（v1.5.0 交互模型）**：null=默认（选择/移动）；'point'/'box'=武装待放置。入口：双击左键建点、右键拖动建框（均只在 overlay 生效，stage 已屏蔽 contextmenu）、工具栏按钮或 Q/W 键武装、E/Esc 取消；**任何一次创建完成必须调 consumePending() 回默认**，切换项目/版本在 loadVersionData 里 cancelPending()。光标跟随物（图钉/四角框）见 updateCursorFollowers。
 
 ### 5.3 多图 + 缩放坐标换算辅助函数
 多个上下文中都用到的关键函数（改动布局/点击命中时必须走它们，别手写坐标）：
