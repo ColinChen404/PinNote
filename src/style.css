@@ -237,18 +237,16 @@ svg.links { position:absolute; inset:0; pointer-events:none; z-index:4; overflow
 .cursor-boxhint {
   position:fixed; z-index:500; pointer-events:none; width:26px; height:20px; display:none;
 }
-/* 常驻快捷操作提示（可“不再提示”） */
+/* 常驻快捷操作提示（顶栏中间，可“不再提示”） */
 .quick-hint {
-  position:absolute; bottom:calc(100% + 10px); left:50%; transform:translateX(-50%); white-space:nowrap;
-  background:#1d2129; color:#fff; font-size:11px; padding:7px 12px; border-radius:8px;
-  display:none; box-shadow:0 6px 20px rgba(16,24,40,.25);
+  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  white-space:nowrap; font-size:11.5px; color:#8a8f98;
 }
-.quick-hint.show { display:block; }
-.hint-off {
-  border:none; background:none; color:#9aa0a8; font-size:11px; cursor:pointer;
-  margin-left:8px; padding:0; text-decoration:underline;
+.quick-hint .hint-off {
+  border:none; background:none; color:#b6bac2; font-size:11px; cursor:pointer;
+  margin-left:10px; padding:0; text-decoration:underline;
 }
-.hint-off:hover { color:#fff; }
+.quick-hint .hint-off:hover { color:#4f6ef7; }
 .cursor-boxhint i { position:absolute; width:8px; height:8px; border:1.5px solid rgba(191,77,85,.6); }
 .cursor-boxhint i:nth-child(1) { left:0; top:0; border-right:none; border-bottom:none; }
 .cursor-boxhint i:nth-child(2) { right:0; top:0; border-left:none; border-bottom:none; }

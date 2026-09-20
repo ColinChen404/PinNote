@@ -114,6 +114,7 @@
       renderWorkspaceEmpty();
     }
     bindGlobalKeys();
+    ensureQuickHint();
   }
 
   function renderShell() {
@@ -222,9 +223,6 @@
       b.classList.toggle('active', b.dataset.tool === state.pendingTool);
       b.disabled = state.readOnly;
     });
-    // 常驻快捷操作提示：一次性工具武装期间让位，恢复默认后继续显示
-    const qh = toolbar.querySelector('.quick-hint');
-    if (qh) qh.classList.toggle('show', !state.pendingTool);
   }
 
   // ---------- 工具状态：默认=选择/移动；点/框为一次性武装，完成一次即回默认 ----------
@@ -282,23 +280,9 @@
     if (pinEl) pinEl.style.display = 'none';
   }
 
-  // 状态提示：悬浮工具条上方的小气泡，不弹窗、不遮画布
-  function showToolHint() {
-    if (!toolbar) return;
-    const text = state.pendingTool === 'point' ? '点击设计稿放置 · Esc 取消' : '拖动框选范围 · Esc 取消';
-    let h = toolbar.querySelector('.tool-hint');
-    if (!h) {
-      h = el('div', 'tool-hint');
-      toolbar.appendChild(h);
-    }
-    h.textContent = text;
-    h.classList.add('show');
-  }
-
-  function hideToolHint() {
-    const h = toolbar && toolbar.querySelector('.tool-hint');
-    if (h) h.classList.remove('show');
-  }
+  // 状态提示已移除（v1.5.0 反馈）：快捷操作常驻提示在顶栏，无需瞬态弹泡
+  function showToolHint() {}
+  function hideToolHint() {}
 
   // ---------- 侧边栏 ----------
   function renderSidebar() {
@@ -719,19 +703,24 @@
     fb.querySelector('[data-z="in"]').onclick = () => { showZoomHint(); setZoom(state.zoom * ZOOM_STEP); };
     $('.zoom-label', fb).onclick = () => setZoom(1);
     $('#zoom-fit', fb).onclick = () => setZoom(1);
-    // 常驻快捷操作提示（点“不再提示”后永久消失）
-    let qhOff = false;
-    try { qhOff = localStorage.getItem('pinnote_quickhint_off') === '1'; } catch (e) {}
-    if (!qhOff) {
-      const qh = el('div', 'quick-hint', '快捷操作：左键双击打点；右键拖动框选<button type="button" class="hint-off">不再提示</button>');
-      fb.appendChild(qh);
-      qh.querySelector('.hint-off').onclick = (e) => {
-        e.stopPropagation();
-        try { localStorage.setItem('pinnote_quickhint_off', '1'); } catch (err) {}
-        qh.classList.remove('show');
-      };
-    }
     return fb;
+  }
+
+  // 常驻快捷操作提示：固定在顶栏中间，点“不再提示”前一直在（只建一次，不随工具条重建）
+  function ensureQuickHint() {
+    if (document.getElementById('quick-hint')) return;
+    let off = false;
+    try { off = localStorage.getItem('pinnote_quickhint_off') === '1'; } catch (e) {}
+    if (off) return;
+    const bar = $('.topbar');
+    if (!bar) return;
+    const qh = el('div', 'quick-hint', '快捷操作：左键双击打点；右键拖动框选<button type="button" class="hint-off">不再提示</button>');
+    qh.id = 'quick-hint';
+    bar.appendChild(qh);
+    qh.querySelector('.hint-off').onclick = () => {
+      try { localStorage.setItem('pinnote_quickhint_off', '1'); } catch (err) {}
+      qh.remove();
+    };
   }
 
   // 缩放提示：点工具栏 +/- 时浮出；点“不再提示”或用过 Ctrl+滚轮 后永久消失
