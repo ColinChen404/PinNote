@@ -707,10 +707,12 @@
   }
 
   // 常驻快捷操作提示：固定在顶栏中间，点“不再提示”前一直在（只建一次，不随工具条重建）
+  // 注意：键名带 _v2——旧键 pinnote_quickhint_off 被旧版提示用过（用户点过“不再提示”），
+  // 换新键让顶栏提示重新出现一次。
   function ensureQuickHint() {
     if (document.getElementById('quick-hint')) return;
     let off = false;
-    try { off = localStorage.getItem('pinnote_quickhint_off') === '1'; } catch (e) {}
+    try { off = localStorage.getItem('pinnote_quickhint_topbar_off') === '1'; } catch (e) {}
     if (off) return;
     const bar = $('.topbar');
     if (!bar) return;
@@ -718,7 +720,7 @@
     qh.id = 'quick-hint';
     bar.appendChild(qh);
     qh.querySelector('.hint-off').onclick = () => {
-      try { localStorage.setItem('pinnote_quickhint_off', '1'); } catch (err) {}
+      try { localStorage.setItem('pinnote_quickhint_topbar_off', '1'); } catch (err) {}
       qh.remove();
     };
   }
