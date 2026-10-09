@@ -351,14 +351,15 @@ async function generatePdfBuffer(layout) {
 
 ipcMain.handle('export:pdf', async (e, payload) => {
   try {
-    const { project, version, layout } = payload;
+    const { project, version, layout, compareTag } = payload;
     const pdf = await generatePdfBuffer(layout);
     const date = new Date();
     const ds = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
     // 清理文件名中的非法字符
     const safeName = String(project.name || '项目').replace(/[\\/:*?"<>|]+/g, '_').trim() || '项目';
     const safeVer = String(version.name || 'V1').replace(/[\\/:*?"<>|]+/g, '_').trim() || 'V1';
-    const fname = `${safeName}_${safeVer}_设计稿修改建议_${ds}.pdf`;
+    const safeCmp = compareTag ? '_' + String(compareTag).replace(/[\\/:*?"<>|]+/g, '_') : '';
+    const fname = `${safeName}_${safeVer}${safeCmp}_设计稿修改建议_${ds}.pdf`;
     const r = await dialog.showSaveDialog(win, {
       title: '导出 PDF',
       defaultPath: path.join(app.getPath('desktop'), fname),
@@ -822,6 +823,12 @@ async function runSmoke() {
         await wait(450);
         const csC = document.querySelector('.compare-scroll');
         rpt('对比窗格滚动同步', !!csC && Math.abs(csC.scrollTop - saC.scrollTop) <= 2);
+        // 对比模式导出：先询问是否同步导出旧版本
+        document.querySelector('[data-tool="export-pdf"]').click();
+        await wait(600);
+        const expModal = document.querySelector('.paste-chooser');
+        rpt('对比模式导出弹出版本选择', !!expModal && expModal.innerText.indexOf('同时导出') >= 0);
+        if (expModal) { expModal.closest('.modal-mask').remove(); await wait(150); }
         document.getElementById('compare-btn').click();
         await wait(300);
         rpt('退出对比恢复布局', !document.querySelector('.compare-pane') && document.querySelector('.app').className.indexOf('sb-collapsed') < 0);

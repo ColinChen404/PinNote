@@ -5,15 +5,17 @@
 ## v1.6.0 · 2026-09-21
 
 - 新增：版本对比模式——顶栏「版本对比」一键并排查看历史版本设计稿，滚动与缩放同步，两稿顶部对齐
-- 进入对比时项目栏自动收起；历史版本只读、仅展示设计稿图；再次展开项目栏时以浮层覆盖，不挤压当前版本
-- 宽度分配以当前版本优先：画布与批注列始终完整显示，剩余空间才分给对比窗格与参考图
-- 参考图面板宽度自适应：窗口空间充裕时自动加宽（上限 30%），参考图随之放大
+- 对比模式下导出 PDF 可选「同时导出」：生成新旧版本并排的对比版 PDF，文件名自动标注（如 `_含V1对比`）
+- 宽度分配以当前版本优先：画布与批注列、旧版本画布均完整显示，参考图让路（30% 封顶、最窄 240px）
+- 进入对比时项目栏自动收起；再次展开项目栏时以浮层覆盖，不挤压当前版本
+- 参考图面板宽度自适应：窗口空间充裕时自动加宽（上限 30%）
 
 > English
 > - New: Version Compare — view a historical version side-by-side from the top bar, with synced scrolling/zoom and top-aligned canvases
-> - Entering compare collapses the project sidebar; the historical pane is read-only images only; re-expanding the sidebar overlays it instead of squeezing the current version
-> - Layout gives priority to the current version: its canvas and note column always fit; remaining space goes to the compare pane and references
-> - The reference panel widens adaptively (up to 30%) when there is room, scaling reference images accordingly
+> - Export in compare mode offers "include old version": produces a side-by-side comparison PDF with an annotated filename
+> - Layout priority: current canvas + note column and the old canvas always fit; the reference panel yields (30% cap, min 240px)
+> - Entering compare collapses the project sidebar; re-expanding it overlays the old pane instead of squeezing the current version
+> - The reference panel widens adaptively (up to 30%) when there is room
 
 ## v1.5.0 · 2026-09-11
 

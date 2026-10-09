@@ -959,8 +959,8 @@
     updateExportBtn();
   }
 
-  // 对比模式宽度分配（最大前提：当前版本的画布+批注列必须完整显示）：
-  // 先算主画板需要多宽，剩余空间再分给参考图（30% 封顶、320 起步）和对比窗格（最少 240）。
+  // 对比模式宽度分配（优先级：当前版本画布+批注列 > 旧版本画布完整 > 参考图）：
+  // 参考图 30% 封顶，空间不够时一路压缩到 240px 地板，保证两个画布都完整。
   function layoutCompareWidths() {
     if (!state.compare || !state.compare.active) return;
     const ws = document.querySelector('.workspace');
@@ -969,12 +969,13 @@
     const pane = document.querySelector('.compare-pane');
     if (!pane) return;
     const stageW = canvasMaxW() + MARK_GAP + SUGG_WIDTH;
-    const boardNeed = Math.min(stageW + 48, W); // 画布+批注列 + 两侧 24px 边距
+    const cmpNeed = canvasMaxW() + 48; // 旧版画布完整显示所需（含边距）
+    const boardNeed = Math.min(stageW + 48, W);
     let refW = Math.round(Math.min(Math.max(W * 0.3, 320), 640));
     let cmpW = W - refW - boardNeed;
-    if (cmpW < 240) {
-      refW = Math.max(320, Math.round(W - boardNeed - 240));
-      cmpW = Math.max(200, W - refW - boardNeed);
+    if (cmpW < cmpNeed) {
+      refW = Math.max(240, Math.round(W - boardNeed - cmpNeed));
+      cmpW = Math.max(Math.min(cmpNeed, W - refW - boardNeed), 200);
     }
     pane.style.flex = '0 0 ' + cmpW + 'px';
     pane.style.width = cmpW + 'px';
@@ -1542,11 +1543,82 @@
     if (!state.project || !state.images.length) return;
     setSaveState('正在导出 PDF…');
     await doSave();
-    const layout = buildExportLayout();
-    const r = await api.exportPdf({ project: state.project, version: state.version, layout });
+    // 对比模式下先询问：是否把旧版本一并导出（并排对比版 PDF）
+    if (state.compare.active && state.compare.versionId && state.compare.images.length) {
+      const oldV = state.project.versions.find(v => v.id === state.compare.versionId);
+      askCompareExport(oldV);
+      return;
+    }
+    await doExportPdf(false, null);
+  }
+
+  function askCompareExport(oldV) {
+    const mask = el('div', 'modal-mask');
+    const m = el('div', 'modal paste-chooser');
+    m.innerHTML = `<h3>导出 PDF</h3>
+      <div class="mbody">
+        <div class="paste-q">当前处于版本对比模式，是否同步导出旧版本？</div>
+        <div class="paste-cards">
+          <div class="paste-card" data-k="both">
+            <div class="pc-t">同时导出（并排对比版）</div>
+            <div class="pc-d">旧版本（${escapeHtml(oldV ? oldV.name : '')}）与当前版本左右并排，附批注与参考图</div>
+          </div>
+          <div class="paste-card" data-k="current">
+            <div class="pc-t">仅导出当前版本</div>
+            <div class="pc-d">与常规导出一致</div>
+          </div>
+        </div>
+      </div>`;
+    mask.appendChild(m);
+    document.body.appendChild(mask);
+    mask.onclick = (e) => { if (e.target === mask) { mask.remove(); setSaveState('✓ 已保存'); } };
+    m.querySelector('[data-k="both"]').onclick = () => { mask.remove(); doExportPdf(true, oldV); };
+    m.querySelector('[data-k="current"]').onclick = () => { mask.remove(); doExportPdf(false, null); };
+  }
+
+  async function doExportPdf(withOld, oldV) {
+    setSaveState('正在导出 PDF…');
+    const layout = withOld ? buildCompareExportLayout() : buildExportLayout();
+    const r = await api.exportPdf({
+      project: state.project, version: state.version, layout,
+      compareTag: withOld && oldV ? '含' + oldV.name + '对比' : ''
+    });
     if (r.ok) setSaveState('✓ 已导出');
     else if (r.canceled) setSaveState('✓ 已保存');
     else { setSaveState('导出失败: ' + r.error, true); alert('导出失败: ' + r.error); }
+  }
+
+  // 对比版导出布局：旧版本画布列（左）+ 当前版本完整布局（右）平移拼接，中缝加分隔线
+  function buildCompareExportLayout() {
+    const base = buildExportLayout();
+    let shift = 100, oldOffY = 0;
+    const oldImgs = state.compare.images.map(im => {
+      const baseW = im.naturalW === 750 ? 375 : DISPLAY_WIDTH_FIXED;
+      const w = Math.round(baseW * state.zoom);
+      const h = Math.round(im.naturalH * (w / im.naturalW));
+      const d = { dataUrl: im.dataUrl, left: 0, top: oldOffY, width: w, height: h };
+      oldOffY += h + 12;
+      shift = Math.max(shift, w);
+      return d;
+    });
+    oldOffY -= 12;
+    shift += 40; // 旧版列宽 + 列间距
+    base.detailImages.forEach(d => { d.left += shift; });
+    base.marks.forEach(m => { m.x += shift; });
+    base.lines.forEach(l => { l.x1 += shift; l.x2 += shift; });
+    base.suggestions.forEach(s => { s.left += shift; });
+    base.refs.forEach(r => { r.left += shift; });
+    const height = Math.max(base.height, oldOffY);
+    base.lines.push({ x1: shift - 20, y1: 0, x2: shift - 20, y2: height }); // 中缝分隔线
+    return {
+      width: base.width + shift,
+      height: height,
+      detailImages: oldImgs.concat(base.detailImages),
+      marks: base.marks,
+      lines: base.lines,
+      suggestions: base.suggestions,
+      refs: base.refs
+    };
   }
 
   function buildExportLayout() {
