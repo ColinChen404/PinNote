@@ -2,6 +2,17 @@
 
 本文件记录 PinNote 的所有重要变更。/ All notable changes to PinNote are documented here.
 
+## v1.6.0 · 2026-09-21
+
+- 新增：版本对比模式——顶栏「版本对比」一键并排查看历史版本设计稿，滚动与缩放同步
+- 进入对比时项目栏自动收起；历史版本只读、仅展示设计稿图；退出后自动恢复
+- 参考图面板宽度自适应：窗口空间充裕时自动加宽（上限约 40%），参考图随之放大
+
+> English
+> - New: Version Compare — view a historical version side-by-side from the top bar, with synced scrolling and zoom
+> - Entering compare collapses the project sidebar; the historical pane is read-only images only and restores on exit
+> - The reference panel now widens adaptively (up to ~40%) when there is room, scaling reference images accordingly
+
 ## v1.5.0 · 2026-09-11
 
 - 交互重构：默认即选择/移动——双击左键打点、右键拖动框选，无需先切换工具

@@ -22,11 +22,14 @@ body {
   height:30px; padding:0 13px; display:inline-flex; align-items:center; justify-content:center;
   font-size:12.5px; border-radius:8px;
 }
-/* 添加设计稿：与项目栏右缘对齐（侧栏收起后位置保持不动） */
-#add-detail-btn {
+/* 顶栏动作按钮组：与项目栏右缘对齐（侧栏收起后位置保持不动） */
+.tb-actions {
   position:absolute; left:calc(var(--sbw) + 14px); top:50%; transform:translateY(-50%);
+  display:flex; align-items:center; gap:8px;
 }
-#add-detail-btn:disabled { opacity:.5; cursor:not-allowed; }
+.tb-actions .btn:disabled { opacity:.5; cursor:not-allowed; }
+#compare-btn.active { background:#4f6ef7; border-color:#4f6ef7; color:#fff; }
+#compare-btn.active:hover { background:#6b85f9; }
 .topbar .app-icon { height:24px; width:24px; border-radius:6px; }
 .topbar .logo { font-weight:700; font-size:14px; letter-spacing:.2px; }
 .proj-crumb {
@@ -179,20 +182,21 @@ svg.links { position:absolute; inset:0; pointer-events:none; z-index:4; overflow
 
 /* 拖拽提示（scrollArea 也用 droppable） */
 .scroll-area.droppable { background:rgba(79,110,247,.05); }
-/* 参考图面板（贴右固定，滚动跟随画板，自身不出滚动条） */
+/* 参考图面板（贴右固定，滚动跟随画板，自身不出滚动条；空间充裕时自适应加宽） */
 .refcol {
-  flex:none; width:320px; position:relative; overflow:hidden;
+  flex:1 1 320px; min-width:320px; max-width:min(40%, 640px);
+  position:relative; overflow:hidden;
   border-left:1px dashed #d8dbe0; background:rgba(255,255,255,.8);
   padding:12px 10px;
 }
 .refcol-inner { position:relative; width:100%; }
 .refcol.droppable { background:rgba(79,110,247,.07); }
 .ref-item {
-  position:absolute; width:260px; text-align:center; cursor:move;
+  position:absolute; width:calc(100% - 4px); text-align:center; cursor:move;
   left:50%; transform:translateX(-50%);
 }
 .ref-item img {
-  width:260px; display:block; border:1px solid #eceef1; border-radius:10px; background:#fff;
+  width:100%; display:block; border:1px solid #eceef1; border-radius:10px; background:#fff;
   box-shadow:0 1px 2px rgba(16,24,40,.05), 0 6px 16px rgba(16,24,40,.06);
 }
 .ref-item .rl { font-size:12px; color:#4b5563; margin-top:4px; }
@@ -210,6 +214,26 @@ svg.links { position:absolute; inset:0; pointer-events:none; z-index:4; overflow
 .ref-empty .re-plus { font-size:26px; color:#c2c7cd; line-height:1; }
 .ref-empty .re-t { font-size:12px; color:#9aa0a8; }
 .refcol.droppable .ref-empty { border-color:#4f6ef7; background:#f5f7ff; }
+
+/* 版本对比窗格（画板区左侧 1/3，只读，滚动与主画板同步） */
+.compare-pane {
+  flex:0 0 33.33%; min-width:260px; display:flex; flex-direction:column;
+  border-right:1px dashed #d8dbe0; background:#eef0f3;
+}
+.compare-head {
+  flex:none; height:40px; display:flex; align-items:center; gap:8px;
+  padding:0 10px; border-bottom:1px solid #e6e8ec; background:rgba(255,255,255,.7);
+}
+.compare-t { font-size:12px; color:#8a8f98; }
+.compare-version-btn { white-space:nowrap; }
+.compare-exit { margin-left:auto; }
+.compare-scroll { flex:1; overflow:hidden; position:relative; }
+.compare-canvas { position:relative; margin:16px auto 0; min-width:100%; }
+.compare-img { position:absolute; display:block; border-radius:4px; }
+.compare-empty {
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  text-align:center; color:#b3b9c2; font-size:12px; line-height:1.9; white-space:nowrap;
+}
 
 /* 画布底部悬浮工具条（半透明毛玻璃） */
 .floatbar {

@@ -786,6 +786,47 @@ async function runSmoke() {
         await wait(150);
         rpt('框待绘制单击不建框并回默认', window.__pinTest.getState().pendingTool === null && document.querySelectorAll('.mark-box').length === boxesBefore + 1);
 
+        // 5.7 版本对比模式：单版本禁用 → 建V2 → 进入对比 → 选V1 → 同步 → 退出恢复
+        const cmpBtn = document.getElementById('compare-btn');
+        rpt('单版本时对比按钮禁用', !!cmpBtn && cmpBtn.disabled === true);
+        const vrr = await window.api.loadProject(bpid);
+        const v2id = 'v2_' + Date.now();
+        const pr2 = await window.api.saveDetailBuffer(bpid, v2id, B64);
+        rpt('对比用第二版图片写入', pr2.ok);
+        vrr.project.versions.push({ id: v2id, name: 'V2', images: [{ path: pr2.path, naturalW: 790, naturalH: 3000 }], marks: [], suggestions: {}, refs: [] });
+        vrr.project.currentVersionId = v2id;
+        await window.api.saveProject(vrr.project);
+        await window.__pinTest.openProject(bpid);
+        await wait(600);
+        await window.__pinTest.switchVersion(v2id);
+        await wait(500);
+        rpt('V2 下对比按钮可用', !!cmpBtn && cmpBtn.disabled === false);
+        cmpBtn.click();
+        await wait(300);
+        rpt('进入对比模式出现对比窗格', !!document.querySelector('.compare-pane'));
+        rpt('进入对比后项目栏自动收起', document.querySelector('.app').className.indexOf('sb-collapsed') >= 0);
+        document.querySelector('.compare-version-btn').click();
+        await wait(250);
+        const v1item = Array.from(document.querySelectorAll('.ctx-item')).find(i => i.innerText.indexOf('V1') >= 0);
+        rpt('版本菜单列出历史版本', !!v1item);
+        if (v1item) { v1item.click(); await wait(1000); }
+        rpt('选中V1后对比画布显示设计稿', document.querySelectorAll('.compare-canvas img').length >= 1);
+        const saC = document.querySelector('.scroll-area');
+        saC.scrollTop = 400;
+        await wait(450);
+        const csC = document.querySelector('.compare-scroll');
+        rpt('对比窗格滚动同步', !!csC && Math.abs(csC.scrollTop - saC.scrollTop) <= 2);
+        document.getElementById('compare-btn').click();
+        await wait(300);
+        rpt('退出对比恢复布局', !document.querySelector('.compare-pane') && document.querySelector('.app').className.indexOf('sb-collapsed') < 0);
+        // 移除测试用的 V2，恢复单版本状态（后续版本菜单断言依赖“最后版本不可删”）
+        const vr3 = await window.api.loadProject(bpid);
+        vr3.project.versions = vr3.project.versions.filter(v => v.id !== v2id);
+        vr3.project.currentVersionId = vr3.project.versions[0].id;
+        await window.api.saveProject(vr3.project);
+        await window.__pinTest.openProject(bpid);
+        await wait(400);
+
         // 6) 删空画布 → 回到上传空状态
         for (let k = 0; k < 3; k++) {
           const del = document.querySelector('.imgdel');

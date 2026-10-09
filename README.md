@@ -54,6 +54,7 @@ PinNote 最初要解决的问题特别小：怎么给一张电商详情页提修
 - **标注即建议**：每条标注自动连线一张修改说明卡，位置和意见一一对应，不会张冠李戴
 - **参考图对照**：文字说不清"改成什么样"，就贴一张参考图，挂在意见旁边
 - **一键修改单**：所有意见汇总成一份长页 PDF——带原图、标注、说明、参考图，直接发给设计、开发或供应商
+- **版本对比**：V2 起可与历史版本并排对比（滚动同步），核对新版改了哪里
 - **多稿迭代**：项目 / 版本两级管理（V1、V2…），新稿开新画布，历史随时回看
 - **顺手细节**：Ctrl+V 粘贴截图、多张长图无缝拼接、0.6s 自动保存、无需登录不上传
 
@@ -137,6 +138,7 @@ Unfortunately, I couldn't code.
 - **Annotation is the comment**: every mark auto-connects to its own note card, so position and fix always stay paired
 - **Reference images**: when words can't say "make it look like this", attach one right beside the note
 - **One-click revision sheet**: everything rolls up into a single long-page PDF — original, annotations, notes, references — ready to send
+- **Version compare**: from V2 on, view any historical version side-by-side with synced scrolling
 - **Iterate by version**: projects and versions (V1, V2…); a new draft means a fresh canvas, and history stays browsable
 - **Quality-of-life**: paste with Ctrl+V, stitch long screenshots, 0.6s autosave, no login and no uploads
 

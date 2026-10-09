@@ -25,6 +25,7 @@
     sugg: {},               // markId -> { id, text, top } (top 为显示坐标)
     refs: [],               // [{id,path,dataUrl,label,top,h}]
     pendingTool: null,      // null | 'point' | 'box'（一次性工具，完成一次即回默认）
+    compare: { active: false, versionId: null, images: [], preSidebar: false }, // 版本对比模式
     selected: null,         // markId
     editing: null,          // markId
     readOnly: false,
@@ -115,6 +116,10 @@
     }
     bindGlobalKeys();
     ensureQuickHint();
+    // 窗口尺寸变化：参考图面板宽度自适应后重算高度与同步范围
+    window.addEventListener('resize', () => {
+      if (refCol && refColInner) { updateRefHeights(); layoutSuggs(); }
+    });
   }
 
   function renderShell() {
@@ -128,7 +133,10 @@
           <span class="logo">PinNote</span>
           <span class="proj-crumb" id="proj-crumb"></span>
         </div>
-        <button type="button" class="btn small" id="add-detail-btn" title="追加设计稿到画布下方（也可拖拽图片或 Ctrl+V 粘贴）"><svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 1v10M1 6h10"/></svg>添加设计稿</button>
+        <div class="tb-actions">
+          <button type="button" class="btn small" id="add-detail-btn" title="追加设计稿到画布下方（也可拖拽图片或 Ctrl+V 粘贴）"><svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 1v10M1 6h10"/></svg>添加设计稿</button>
+          <button type="button" class="btn small" id="compare-btn" title="与历史版本并排对比">版本对比</button>
+        </div>
         <div class="tb-right">
           <span class="save-state"></span>
           <button type="button" class="btn small" id="save-btn" title="Ctrl+S">保存</button>
@@ -157,6 +165,7 @@
     // 侧栏空白处右键不弹系统菜单
     sidebar.addEventListener('contextmenu', (e) => e.preventDefault());
     $('#add-detail-btn', app).onclick = onAppendImage;
+    $('#compare-btn', app).onclick = toggleCompare;
     $('#save-btn', app).onclick = () => doSave();
     $('#export-btn', app).onclick = onExportPdf;
     $('#archive-btn', app).onclick = onToggleArchive;
@@ -186,6 +195,14 @@
     }
     const addBtn = document.getElementById('add-detail-btn');
     if (addBtn) addBtn.disabled = !state.project || state.readOnly;
+    const cmpBtn = document.getElementById('compare-btn');
+    if (cmpBtn) {
+      const idx = state.project ? state.project.versions.findIndex(v => v.id === (state.version && state.version.id)) : -1;
+      const canCompare = !!state.project && !state.readOnly && idx > 0; // V2 起才有历史版本可比
+      cmpBtn.disabled = !canCompare;
+      cmpBtn.classList.toggle('active', !!(state.compare && state.compare.active));
+      cmpBtn.title = canCompare ? '与历史版本并排对比' : (state.project ? '当前是第一个版本，没有可对比的历史版本' : '先打开一个项目');
+    }
     const exBtn = document.querySelector('[data-tool="export-pdf"]');
     if (exBtn) exBtn.disabled = !state.project || !state.images.length;
     const arBtn = document.getElementById('archive-btn');
@@ -390,11 +407,14 @@
     await loadVersionData();
     renderSidebar();
     renderWorkspace();
+    renderToolbar();
   }
 
   async function loadVersionData() {
     const v = state.version;
     cancelPending(); // 切换项目/版本时取消未完成的工具操作
+    if (state.compare.active) setSidebarCollapsed(state.compare.preSidebar); // 退出对比并恢复项目栏
+    state.compare = { active: false, versionId: null, images: [], preSidebar: false };
     state.marks = (v.marks || []).map(m => ({ ...m }));
     state.sugg = {};
     Object.keys(v.suggestions || {}).forEach(k => {
@@ -660,29 +680,122 @@
     return refCol;
   }
 
-  // 画板区与参考图面板滚动同步：内容高度一致，任一侧滚动另一侧 1:1 跟随。
-  // 用逐帧泵实现（scroll 事件方案在本环境有偶发丢失），每帧对比两侧位置，谁变了同步谁。
-  let syncPumpStarted = false, lastSaTop = -1, lastRcTop = -1;
+  // 画板区与参考图面板/对比窗格滚动同步：内容高度一致，任一侧滚动其余 1:1 跟随。
+  // 用逐帧泵实现（scroll 事件方案在本环境有偶发丢失），每帧对比位置，谁变了同步谁。
+  let syncPumpStarted = false, lastSaTop = -1, lastRcTop = -1, lastCmpTop = -1;
   function bindScrollSync() {
     if (!scrollArea || !refCol) return;
     lastSaTop = scrollArea.scrollTop;
     lastRcTop = refCol.scrollTop;
+    const cmp = document.querySelector('.compare-scroll');
+    lastCmpTop = cmp ? cmp.scrollTop : -1;
     if (syncPumpStarted) return;
     syncPumpStarted = true;
     const pump = () => {
-      const sa = scrollArea, rc = refCol;
+      const sa = scrollArea, rc = refCol, cm = document.querySelector('.compare-scroll');
       if (sa && rc && sa.scrollHeight > sa.clientHeight) {
         if (sa.scrollTop !== lastSaTop) {
           lastSaTop = sa.scrollTop;
           if (rc.scrollTop !== lastSaTop) { rc.scrollTop = lastSaTop; lastRcTop = lastSaTop; }
+          if (cm && cm.scrollTop !== lastSaTop) { cm.scrollTop = lastSaTop; lastCmpTop = lastSaTop; }
         } else if (rc.scrollTop !== lastRcTop) {
           lastRcTop = rc.scrollTop;
           if (sa.scrollTop !== lastRcTop) { sa.scrollTop = lastRcTop; lastSaTop = lastRcTop; }
+        } else if (cm && cm.scrollTop !== lastCmpTop) {
+          lastCmpTop = cm.scrollTop;
+          if (sa.scrollTop !== lastCmpTop) { sa.scrollTop = lastCmpTop; lastSaTop = lastCmpTop; }
         }
       }
       requestAnimationFrame(pump);
     };
     requestAnimationFrame(pump);
+  }
+
+  // ---------- 版本对比模式：左侧并排显示历史版本设计稿（只读），滚动与主画板同步 ----------
+  function toggleCompare() {
+    if (!state.project || state.readOnly) return;
+    if (state.compare.active) { exitCompare(); return; }
+    const idx = state.project.versions.findIndex(v => v.id === state.version.id);
+    if (idx <= 0) return;
+    state.compare = { active: true, versionId: null, images: [], preSidebar: !!state.sidebarCollapsed };
+    setSidebarCollapsed(true); // 进入对比自动收起项目栏
+    renderWorkspace(); renderToolbar();
+  }
+
+  function exitCompare() {
+    if (!state.compare || !state.compare.active) return;
+    const pre = state.compare.preSidebar;
+    state.compare = { active: false, versionId: null, images: [], preSidebar: false };
+    setSidebarCollapsed(pre); // 恢复进入前的项目栏状态
+    renderWorkspace(); renderToolbar();
+  }
+
+  async function selectCompareVersion(vid) {
+    const v = state.project && state.project.versions.find(x => x.id === vid);
+    if (!v) return;
+    const imgs = [];
+    for (const im of (v.images || [])) {
+      const d = await api.readDataUrl(im.path);
+      if (d.ok) imgs.push({ dataUrl: d.dataUrl, naturalW: im.naturalW, naturalH: im.naturalH });
+    }
+    state.compare.versionId = vid;
+    state.compare.images = imgs;
+    renderWorkspace();
+  }
+
+  function buildComparePane() {
+    const pane = el('div', 'compare-pane');
+    const head = el('div', 'compare-head');
+    head.appendChild(el('span', 'compare-t', '对比'));
+    const cur = state.compare.versionId && state.project.versions.find(v => v.id === state.compare.versionId);
+    const pick = el('button', 'btn small compare-version-btn', (cur ? cur.name : '对比版本') + ' ▾');
+    pick.title = '选择要对比的历史版本';
+    pick.onclick = (e) => {
+      const r = e.currentTarget.getBoundingClientRect();
+      const idx = state.project.versions.findIndex(v => v.id === state.version.id);
+      const items = state.project.versions.slice(0, idx).reverse().map(v => ({
+        label: v.name + (v.id === state.compare.versionId ? ' ✓' : ''),
+        fn: () => selectCompareVersion(v.id)
+      }));
+      openCtxMenu(r.left, r.bottom + 6, items);
+    };
+    head.appendChild(pick);
+    const exit = el('button', 'icon-btn compare-exit', '×');
+    exit.title = '退出对比';
+    exit.onclick = exitCompare;
+    head.appendChild(exit);
+    pane.appendChild(head);
+    const scroll = el('div', 'compare-scroll');
+    scroll.addEventListener('wheel', (e) => {
+      if (!scrollArea) return;
+      e.preventDefault();
+      scrollArea.scrollTop += e.deltaY;
+      scrollArea.scrollLeft += e.deltaX;
+    }, { passive: false });
+    const canvas = el('div', 'compare-canvas');
+    if (state.compare.images.length) {
+      let offY = 0, maxW = 0;
+      state.compare.images.forEach(im => {
+        const baseW = im.naturalW === 750 ? 375 : DISPLAY_WIDTH_FIXED;
+        const w = Math.round(baseW * state.zoom);
+        const h = Math.round(im.naturalH * (w / im.naturalW));
+        const img = el('img', 'compare-img');
+        img.src = im.dataUrl;
+        img.draggable = false;
+        img.style.cssText = `width:${w}px;height:${h}px;left:0;top:${offY}px`;
+        canvas.appendChild(img);
+        offY += h + 12;
+        maxW = Math.max(maxW, w);
+      });
+      offY -= 12;
+      canvas.style.width = maxW + 'px';
+      canvas.style.height = Math.max(offY, 100) + 'px';
+    } else {
+      canvas.innerHTML = '<div class="compare-empty">点击上方按钮<br/>选择要对比的历史版本</div>';
+    }
+    scroll.appendChild(canvas);
+    pane.appendChild(scroll);
+    return pane;
   }
 
   function buildFloatbar() {
@@ -751,12 +864,13 @@
     ws.innerHTML = '';
     if (!state.project) { renderWorkspaceEmpty(); return; }
     if (!state.images.length) {
-      // 空白项目/版本：画板区显示上传投放区，右侧保留参考图面板
+      // 空白项目/版本：画板区显示上传投放区，右侧保留参考图面板（对比模式同样可用）
+      if (state.compare.active) ws.appendChild(buildComparePane());
       const board = el('div', 'board-area');
       board.appendChild(buildEmptyUpload());
       ws.appendChild(board);
       ws.appendChild(buildRefPanel());
-      updateExportBtn();
+      afterWorkspaceRender();
       return;
     }
     layoutCanvas();
@@ -807,6 +921,7 @@
 
     const board = el('div', 'board-area');
     board.appendChild(scrollArea);
+    if (state.compare.active) ws.appendChild(buildComparePane());
     ws.appendChild(board);
     ws.appendChild(buildRefPanel());
 
@@ -821,6 +936,20 @@
     renderSuggs();
     layoutSuggs();
     drawLinks();
+    afterWorkspaceRender();
+  }
+
+  // 渲染收尾：对比窗格高度对齐、滚动同步、导出按钮状态
+  function afterWorkspaceRender() {
+    if (state.compare && state.compare.active && scrollArea) {
+      const cc = document.querySelector('.compare-canvas');
+      if (cc && state.compare.images.length) {
+        const contentH = parseFloat(cc.style.height) || 0;
+        cc.style.height = Math.max(contentH, scrollArea.scrollHeight - 22) + 'px';
+      }
+      const cs = document.querySelector('.compare-scroll');
+      if (cs) cs.scrollTop = scrollArea.scrollTop;
+    }
     bindScrollSync();
     updateExportBtn();
   }
@@ -919,6 +1048,7 @@
 
   function layoutSuggs() {
     if (!suggLayer) return;
+    updateRefHeights();
     // 按期望位置排序，做避让
     const items = state.marks
       .map(m => ({ id: m.id, desired: suggDesiredTop(m) }))
@@ -949,6 +1079,13 @@
       refColInner.style.height = Math.max(scrollArea.scrollHeight - 22, refsBottom() + 40, refCol.clientHeight || 0) + 'px';
     }
     drawLinks();
+  }
+
+  // 参考图高度 = 面板当前内宽 × 宽高比（面板自适应加宽后高度随之更新）
+  function updateRefHeights() {
+    if (!refColInner || !refColInner.clientWidth) return;
+    const w = Math.max(refColInner.clientWidth - 4, 100);
+    state.refs.forEach(r => { if (r.ratio) r.h = Math.round(w * r.ratio); });
   }
 
   function refsBottom() {
@@ -1253,7 +1390,8 @@
       img.src = r.dataUrl;
       img.draggable = false;
       img.onload = () => {
-        r.h = REF_WIDTH * (img.naturalHeight / img.naturalWidth);
+        r.ratio = img.naturalHeight / img.naturalWidth; // 宽高比：面板宽度自适应后按比例重算高度
+        updateRefHeights();
         layoutSuggs();
       };
       item.appendChild(img);
