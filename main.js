@@ -811,6 +811,12 @@ async function runSmoke() {
         rpt('版本菜单列出历史版本', !!v1item);
         if (v1item) { v1item.click(); await wait(1000); }
         rpt('选中V1后对比画布显示设计稿', document.querySelectorAll('.compare-canvas img').length >= 1);
+        const cimg = document.querySelector('.compare-img');
+        const dimg = document.querySelector('.detail-img');
+        rpt('两稿顶部对齐', !!cimg && !!dimg && Math.abs(cimg.getBoundingClientRect().top - dimg.getBoundingClientRect().top) <= 2);
+        const wsW = document.querySelector('.workspace').clientWidth;
+        const rcW = document.querySelector('.refcol').clientWidth;
+        rpt('对比模式参考图不超30%', rcW <= wsW * 0.31);
         const saC = document.querySelector('.scroll-area');
         saC.scrollTop = 400;
         await wait(450);

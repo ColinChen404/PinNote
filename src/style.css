@@ -182,9 +182,9 @@ svg.links { position:absolute; inset:0; pointer-events:none; z-index:4; overflow
 
 /* 拖拽提示（scrollArea 也用 droppable） */
 .scroll-area.droppable { background:rgba(79,110,247,.05); }
-/* 参考图面板（贴右固定，滚动跟随画板，自身不出滚动条；空间充裕时自适应加宽） */
+/* 参考图面板（贴右固定，滚动跟随画板，自身不出滚动条；空间充裕时自适应加宽，30% 封顶） */
 .refcol {
-  flex:1 1 320px; min-width:320px; max-width:min(40%, 640px);
+  flex:1 1 320px; min-width:320px; max-width:min(30%, 640px);
   position:relative; overflow:hidden;
   border-left:1px dashed #d8dbe0; background:rgba(255,255,255,.8);
   padding:12px 10px;
@@ -215,25 +215,34 @@ svg.links { position:absolute; inset:0; pointer-events:none; z-index:4; overflow
 .ref-empty .re-t { font-size:12px; color:#9aa0a8; }
 .refcol.droppable .ref-empty { border-color:#4f6ef7; background:#f5f7ff; }
 
-/* 版本对比窗格（画板区左侧 1/3，只读，滚动与主画板同步） */
+/* 版本对比窗格（画板区左侧，宽度由 JS 按“当前版本优先”分配，只读，滚动与主画板同步） */
 .compare-pane {
-  flex:0 0 33.33%; min-width:260px; display:flex; flex-direction:column;
+  flex:0 0 auto; width:33.33%; min-width:240px; position:relative;
+  display:flex; flex-direction:column;
   border-right:1px dashed #d8dbe0; background:#eef0f3;
 }
+/* 头部悬浮不占布局（24px 高与画布顶边距一致，两稿顶部严格对齐） */
 .compare-head {
-  flex:none; height:40px; display:flex; align-items:center; gap:8px;
-  padding:0 10px; border-bottom:1px solid #e6e8ec; background:rgba(255,255,255,.7);
+  position:absolute; top:0; left:0; right:0; z-index:10; height:24px;
+  display:flex; align-items:center; gap:6px;
+  padding:0 8px; background:rgba(238,240,243,.95); border-bottom:1px solid #e3e6ea;
 }
-.compare-t { font-size:12px; color:#8a8f98; }
-.compare-version-btn { white-space:nowrap; }
-.compare-exit { margin-left:auto; }
+.compare-t { font-size:11px; color:#8a8f98; }
+.compare-version-btn { white-space:nowrap; padding:1px 7px; font-size:11.5px; }
+.compare-head .compare-exit { margin-left:auto; width:18px; height:18px; font-size:12px; }
 .compare-scroll { flex:1; overflow:hidden; position:relative; }
-.compare-canvas { position:relative; margin:16px auto 0; min-width:100%; }
+.compare-canvas { position:relative; margin:24px auto 60px; }
 .compare-img { position:absolute; display:block; border-radius:4px; }
 .compare-empty {
   position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
   text-align:center; color:#b3b9c2; font-size:12px; line-height:1.9; white-space:nowrap;
 }
+/* 对比模式下项目栏为覆盖层：展开时盖住旧版本窗格，不挤压当前版本 */
+.main.compare-on .sidebar {
+  position:absolute; top:0; left:0; bottom:0; z-index:70;
+  box-shadow:2px 0 14px rgba(16,24,40,.16);
+}
+.main.compare-on .board-area { padding:0 24px; }
 
 /* 画布底部悬浮工具条（半透明毛玻璃） */
 .floatbar {

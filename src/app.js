@@ -116,8 +116,9 @@
     }
     bindGlobalKeys();
     ensureQuickHint();
-    // 窗口尺寸变化：参考图面板宽度自适应后重算高度与同步范围
+    // 窗口尺寸变化：对比宽度重分配 + 参考图面板宽度自适应后重算高度
     window.addEventListener('resize', () => {
+      layoutCompareWidths();
       if (refCol && refColInner) { updateRefHeights(); layoutSuggs(); }
     });
   }
@@ -637,6 +638,8 @@
     const ws = $('.workspace');
     toolbar = null;
     ws.innerHTML = '<div class="empty-state"><div style="font-size:15px">新建或选择一个项目开始</div></div>';
+    const mn = $('.main');
+    if (mn) mn.classList.remove('compare-on');
     updateExportBtn();
   }
 
@@ -772,8 +775,8 @@
       scrollArea.scrollTop += e.deltaY;
       scrollArea.scrollLeft += e.deltaX;
     }, { passive: false });
-    const canvas = el('div', 'compare-canvas');
     if (state.compare.images.length) {
+      const canvas = el('div', 'compare-canvas');
       let offY = 0, maxW = 0;
       state.compare.images.forEach(im => {
         const baseW = im.naturalW === 750 ? 375 : DISPLAY_WIDTH_FIXED;
@@ -790,10 +793,10 @@
       offY -= 12;
       canvas.style.width = maxW + 'px';
       canvas.style.height = Math.max(offY, 100) + 'px';
+      scroll.appendChild(canvas);
     } else {
-      canvas.innerHTML = '<div class="compare-empty">点击上方按钮<br/>选择要对比的历史版本</div>';
+      scroll.appendChild(el('div', 'compare-empty', '点击上方按钮<br/>选择要对比的历史版本'));
     }
-    scroll.appendChild(canvas);
     pane.appendChild(scroll);
     return pane;
   }
@@ -862,6 +865,7 @@
   function renderWorkspace() {
     const ws = $('.workspace');
     ws.innerHTML = '';
+    $('.main').classList.toggle('compare-on', !!(state.compare && state.compare.active));
     if (!state.project) { renderWorkspaceEmpty(); return; }
     if (!state.images.length) {
       // 空白项目/版本：画板区显示上传投放区，右侧保留参考图面板（对比模式同样可用）
@@ -939,8 +943,9 @@
     afterWorkspaceRender();
   }
 
-  // 渲染收尾：对比窗格高度对齐、滚动同步、导出按钮状态
+  // 渲染收尾：对比宽度分配、对比窗格高度对齐、滚动同步、导出按钮状态
   function afterWorkspaceRender() {
+    layoutCompareWidths();
     if (state.compare && state.compare.active && scrollArea) {
       const cc = document.querySelector('.compare-canvas');
       if (cc && state.compare.images.length) {
@@ -952,6 +957,29 @@
     }
     bindScrollSync();
     updateExportBtn();
+  }
+
+  // 对比模式宽度分配（最大前提：当前版本的画布+批注列必须完整显示）：
+  // 先算主画板需要多宽，剩余空间再分给参考图（30% 封顶、320 起步）和对比窗格（最少 240）。
+  function layoutCompareWidths() {
+    if (!state.compare || !state.compare.active) return;
+    const ws = document.querySelector('.workspace');
+    if (!ws || !refCol) return;
+    const W = ws.clientWidth;
+    const pane = document.querySelector('.compare-pane');
+    if (!pane) return;
+    const stageW = canvasMaxW() + MARK_GAP + SUGG_WIDTH;
+    const boardNeed = Math.min(stageW + 48, W); // 画布+批注列 + 两侧 24px 边距
+    let refW = Math.round(Math.min(Math.max(W * 0.3, 320), 640));
+    let cmpW = W - refW - boardNeed;
+    if (cmpW < 240) {
+      refW = Math.max(320, Math.round(W - boardNeed - 240));
+      cmpW = Math.max(200, W - refW - boardNeed);
+    }
+    pane.style.flex = '0 0 ' + cmpW + 'px';
+    pane.style.width = cmpW + 'px';
+    refCol.style.flex = '0 0 auto';
+    refCol.style.width = refW + 'px';
   }
 
   function stagePointFromEvent(e) {

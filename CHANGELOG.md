@@ -4,14 +4,16 @@
 
 ## v1.6.0 · 2026-09-21
 
-- 新增：版本对比模式——顶栏「版本对比」一键并排查看历史版本设计稿，滚动与缩放同步
-- 进入对比时项目栏自动收起；历史版本只读、仅展示设计稿图；退出后自动恢复
-- 参考图面板宽度自适应：窗口空间充裕时自动加宽（上限约 40%），参考图随之放大
+- 新增：版本对比模式——顶栏「版本对比」一键并排查看历史版本设计稿，滚动与缩放同步，两稿顶部对齐
+- 进入对比时项目栏自动收起；历史版本只读、仅展示设计稿图；再次展开项目栏时以浮层覆盖，不挤压当前版本
+- 宽度分配以当前版本优先：画布与批注列始终完整显示，剩余空间才分给对比窗格与参考图
+- 参考图面板宽度自适应：窗口空间充裕时自动加宽（上限 30%），参考图随之放大
 
 > English
-> - New: Version Compare — view a historical version side-by-side from the top bar, with synced scrolling and zoom
-> - Entering compare collapses the project sidebar; the historical pane is read-only images only and restores on exit
-> - The reference panel now widens adaptively (up to ~40%) when there is room, scaling reference images accordingly
+> - New: Version Compare — view a historical version side-by-side from the top bar, with synced scrolling/zoom and top-aligned canvases
+> - Entering compare collapses the project sidebar; the historical pane is read-only images only; re-expanding the sidebar overlays it instead of squeezing the current version
+> - Layout gives priority to the current version: its canvas and note column always fit; remaining space goes to the compare pane and references
+> - The reference panel widens adaptively (up to 30%) when there is room, scaling reference images accordingly
 
 ## v1.5.0 · 2026-09-11
 
