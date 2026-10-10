@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>PinNote UI 设计稿 · 方向A（Linear 纪律 × PinNote 品牌）</title>
+<link rel="stylesheet" href="../build-res/fonts/fonts.css">
+<style>
+/* ============ 设计令牌（未来的 style.css 地基） ============ */
+:root{
+  /* 强调色（chrome）：红方案 = 图钉红上位 */
+  --accent:#E5484D; --accent-hover:#D9363C; --accent-active:#C92F34;
+  --accent-soft:rgba(229,72,77,.09); --accent-soft-2:rgba(229,72,77,.32);
+  /* 标注色（画布上的钉/框/连线）：两个方案里都保持鲜亮图钉红 */
+  --mark:#E5484D; --mark-soft:rgba(229,72,77,.05); --mark-line:rgba(229,72,77,.5);
+  /* 中性阶 */
+  --ink-1:#1D2129; --ink-2:#4E5560; --ink-3:#8A8F98; --ink-4:#B6BAC2;
+  --bg-app:#F7F8FA; --panel:#FFFFFF;
+  --hairline:#E5E7EB; --hairline-strong:#D9DCE1;
+  --ws:#ECEDF1; --ws-bg:var(--ws);
+  /* 卡片 */
+  --card:#FFFFFF; --card-border:rgba(16,24,40,.07);
+  /* 圆角：三档 */
+  --r-s:6px; --r-m:8px; --r-l:12px;
+  /* 阴影：两级（贴面卡 / 浮层） */
+  --sh-card:0 1px 2px rgba(16,24,40,.05), 0 8px 24px rgba(16,24,40,.06);
+  --sh-float:0 2px 8px rgba(16,24,40,.08), 0 12px 32px rgba(16,24,40,.14);
+  --sh-stage:0 1px 3px rgba(16,24,40,.10), 0 12px 32px rgba(16,24,40,.08);
+  /* 动效 */
+  --tx:140ms cubic-bezier(.2,.7,.3,1);
+}
+/* 变体：现行蓝（chrome 蓝 + 红标注，即现状的精致化） */
+body[data-accent="blue"]{
+  --accent:#4F6EF7; --accent-hover:#4159D6; --accent-active:#3A4FD0;
+  --accent-soft:rgba(79,110,247,.10); --accent-soft-2:rgba(79,110,247,.34);
+}
+/* 变体：米色便签卡 */
+body[data-card="cream"]{ --card:#FFFCF2; --card-border:rgba(122,96,38,.14); }
+/* 变体：点阵画布底 */
+body[data-canvas="dots"]{ --ws-bg:radial-gradient(rgba(16,24,40,.06) 1px, transparent 1.2px) 0 0/22px 22px, var(--ws); }
+
+*{ box-sizing:border-box; }
+html,body{ margin:0; height:100%; overflow:hidden; }
+body{
+  font-family:"Noto Sans SC","Microsoft YaHei",sans-serif;
+  background:var(--bg-app); color:var(--ink-1); font-size:13px; user-select:none;
+}
+button{ font-family:inherit; }
+
+.app{ display:flex; flex-direction:column; height:100%; --sbw:216px; }
+
+/* ============ 顶栏 ============ */
+.topbar{
+  height:48px; background:var(--panel); border-bottom:1px solid var(--hairline);
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 8px 0 14px; flex:none; position:relative;
+}
+.tb-left{ display:flex; align-items:center; gap:9px; min-width:0; width:var(--sbw); flex:none; }
+.tb-left .app-icon{ height:22px; width:22px; border-radius:5px; }
+.tb-left .logo{ font-weight:700; font-size:14px; letter-spacing:-.01em; }
+.proj-crumb{ font-size:12.5px; color:var(--ink-2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.proj-crumb .sep{ color:var(--ink-4); margin:0 3px; }
+.tb-actions{ position:absolute; left:calc(var(--sbw) + 14px); top:50%; transform:translateY(-50%);
+  display:flex; align-items:center; gap:8px; }
+.tb-right{ display:flex; align-items:center; gap:8px; }
+
+/* 按钮：28/32 两档高度，Linear 式安静 hover（底色变化，不变色） */
+.btn{
+  height:28px; padding:0 12px; display:inline-flex; align-items:center; gap:5px;
+  border:1px solid var(--hairline-strong); background:var(--panel); border-radius:var(--r-m);
+  font-size:12.5px; color:var(--ink-2); cursor:pointer; transition:all var(--tx);
+}
+.btn:hover{ background:#F4F5F7; color:var(--ink-1); border-color:var(--hairline-strong); }
+.btn.primary{ background:var(--accent); border-color:var(--accent); color:#fff; font-weight:500; }
+.btn.primary:hover{ background:var(--accent-hover); border-color:var(--accent-hover); }
+.btn.primary:active{ background:var(--accent-active); }
+.save-state{ font-size:12px; color:var(--ink-3); display:inline-flex; align-items:center; gap:4px; }
+.sep-v{ width:1px; height:20px; background:var(--hairline); margin:0 4px; }
+.icon-btn{
+  border:none; background:transparent; border-radius:7px; width:28px; height:28px;
+  display:inline-flex; align-items:center; justify-content:center;
+  cursor:pointer; color:var(--ink-2); transition:all var(--tx);
+}
+.icon-btn:hover{ background:#F2F3F5; color:var(--ink-1); }
+.win-ctrls{ display:flex; align-items:center; gap:2px; margin-left:2px; }
+.win-btn{
+  border:none; background:transparent; border-radius:7px; width:36px; height:30px;
+  display:inline-flex; align-items:center; justify-content:center;
+  cursor:pointer; color:var(--ink-2); transition:all var(--tx);
+}
+.win-btn:hover{ background:#F2F3F5; color:var(--ink-1); }
+.win-btn.win-close:hover{ background:#E81123; color:#fff; }
+
+/* 顶栏中央的教学提示：从"水印文字"改成一颗可消失的 pill */
+.quick-hint{
+  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  display:flex; align-items:center; gap:8px;
+  font-size:11.5px; color:var(--ink-3);
+  background:#F3F4F6; border:1px solid var(--hairline);
+  padding:3px 6px 3px 12px; border-radius:999px; white-space:nowrap;
+}
+.quick-hint b{ color:var(--ink-2); font-weight:500; }
+.quick-hint .qh-x{
+  border:none; background:transparent; width:16px; height:16px; border-radius:50%;
+  color:var(--ink-4); font-size:11px; line-height:1; cursor:pointer; padding:0;
+  display:inline-flex; align-items:center; justify-content:center; transition:all var(--tx);
+}
+.quick-hint .qh-x:hover{ background:var(--hairline); color:var(--ink-2); }
+
+/* ============ 侧栏 ============ */
+.main{ display:flex; flex:1; overflow:hidden; }
+.sidebar{
+  width:var(--sbw); background:var(--panel); border-right:1px solid var(--hairline);
+  display:flex; flex-direction:column; flex:none;
+}
+.sidebar-header{ padding:10px 12px; display:flex; justify-content:space-between; align-items:center; }
+.sidebar-header .t{ font-weight:600; font-size:13px; letter-spacing:.01em; }
+.sb-add{
+  width:22px; height:22px; border:none; border-radius:var(--r-s); background:var(--accent);
+  color:#fff; font-size:14px; line-height:1; cursor:pointer; padding:0;
+  display:inline-flex; align-items:center; justify-content:center; transition:all var(--tx);
+}
+.sb-add:hover{ background:var(--accent-hover); }
+.sb-collapse{ width:24px; height:24px; }
+.sidebar-list{ flex:1; overflow-y:auto; padding:4px 8px 8px; }
+.section-label{ padding:8px 8px 4px; font-size:11px; color:var(--ink-3); letter-spacing:.06em; }
+.proj{ border-radius:var(--r-m); margin-bottom:1px; }
+.proj-name{
+  padding:6px 8px; display:flex; align-items:center; gap:7px;
+  border-radius:var(--r-m); cursor:pointer; font-weight:500; font-size:13px;
+  color:var(--ink-1); transition:background var(--tx);
+}
+.proj-name .p-ico{ display:inline-flex; color:var(--ink-3); flex:none; }
+.proj-name:hover{ background:#F2F3F5; }
+.proj-name .del{ margin-left:auto; visibility:hidden; color:var(--ink-4); font-size:13px; padding:0 3px; }
+.proj-name:hover .del{ visibility:visible; }
+.proj.active > .proj-name{ background:var(--accent-soft); color:var(--accent); }
+.proj.active > .proj-name .p-ico{ color:var(--accent); }
+.proj.archived > .proj-name{ color:var(--ink-3); font-weight:400; }
+.versions{ padding:2px 0 2px 15px; }
+.ver{
+  padding:4px 8px; display:flex; align-items:center; gap:8px;
+  border-radius:var(--r-s); cursor:pointer; color:var(--ink-2); font-size:12.5px;
+  transition:background var(--tx);
+}
+.ver::before{ content:""; width:5px; height:5px; border-radius:50%; flex:none; background:#C9CDD4; }
+.ver:hover{ background:#F2F3F5; }
+.ver.active{ background:var(--accent-soft); color:var(--accent); font-weight:500; }
+.ver.active::before{ background:var(--accent); }
+.add-version{ padding:4px 8px 4px 21px; font-size:12px; color:var(--accent); cursor:pointer; border-radius:var(--r-s); }
+.add-version:hover{ background:var(--accent-soft); }
+
+/* ============ 工作区 ============ */
+.workspace{ flex:1; display:flex; overflow:hidden; background:var(--ws-bg); position:relative; }
+.board{ flex:1; min-width:0; position:relative; overflow:auto; }
+.lane{ position:relative; width:744px; margin:28px auto 90px; }
+.stage{ position:relative; width:470px; background:#fff; border-radius:3px; box-shadow:var(--sh-stage); }
+.stage > img{ display:block; width:470px; border-radius:3px; }
+.imgdel{
+  position:absolute; top:-9px; right:-9px; width:22px; height:22px; border-radius:50%;
+  background:#fff; border:1px solid var(--hairline-strong); color:var(--ink-2); font-size:13px;
+  cursor:pointer; box-shadow:0 1px 3px rgba(16,24,40,.12);
+  display:flex; align-items:center; justify-content:center; transition:all var(--tx); z-index:10;
+}
+.imgdel:hover{ background:#D4380D; border-color:#D4380D; color:#fff; }
+
+/* 标注：鲜亮图钉红 + 白色光晕（在任何设计稿上都立得住） */
+.mark-point{
+  position:absolute; width:12px; height:12px; border-radius:50%;
+  background:var(--mark); transform:translate(-50%,-50%); cursor:move; z-index:5;
+  box-shadow:0 0 0 2px rgba(255,255,255,.9), 0 1px 5px rgba(229,72,77,.5);
+  transition:transform var(--tx);
+}
+.mark-point:hover{ transform:translate(-50%,-50%) scale(1.15); }
+.mark-point.selected{ box-shadow:0 0 0 2px #fff, 0 0 0 5px var(--accent-soft-2), 0 1px 5px rgba(229,72,77,.5); }
+.mark-box{
+  position:absolute; border:1.5px solid var(--mark); background:var(--mark-soft);
+  cursor:move; z-index:5; border-radius:2px;
+}
+.mark-box .rs{
+  position:absolute; width:9px; height:9px; background:#fff; border:1.5px solid var(--mark);
+  border-radius:2px; right:-6px; bottom:-6px; cursor:nwse-resize;
+}
+svg.links{ position:absolute; left:0; top:0; width:744px; height:768px; pointer-events:none; z-index:4; }
+svg.links line{ stroke:var(--mark-line); stroke-width:1.5; }
+svg.links circle{ fill:var(--mark-line); }
+
+/* 建议卡：细边 + 轻影，Linear 式克制；变体可换米色便签 */
+.sugg{
+  position:absolute; left:494px; width:250px; min-height:64px;
+  background:var(--card); border:1px solid var(--card-border); border-radius:10px; z-index:7;
+  box-shadow:var(--sh-card); transition:box-shadow var(--tx), background var(--tx);
+}
+.sugg:hover{ box-shadow:0 1px 2px rgba(16,24,40,.06), 0 12px 32px rgba(16,24,40,.09); }
+.sugg.selected{ box-shadow:0 0 0 2px var(--accent-soft-2), var(--sh-card); }
+.sugg .txt{ padding:10px 12px; font-size:13px; line-height:1.65; color:var(--ink-1); }
+.sugg .txt.ph{ color:var(--ink-4); }
+.sugg .sdel{
+  position:absolute; top:-8px; right:-8px; width:20px; height:20px; border-radius:50%;
+  background:#fff; border:1px solid var(--hairline-strong); color:var(--ink-3); font-size:11px;
+  cursor:pointer; display:none; align-items:center; justify-content:center; transition:all var(--tx);
+}
+.sugg:hover .sdel{ display:flex; }
+.sugg .sdel:hover{ background:#D4380D; border-color:#D4380D; color:#fff; }
+
+/* 参考图面板：实细线分隔（去掉虚线），空投放区保留虚线语义 */
+.refpanel{
+  width:300px; flex:none; background:rgba(255,255,255,.72);
+  border-left:1px solid var(--hairline); padding:14px 12px; overflow-y:auto;
+}
+.ref-item{ position:relative; text-align:center; margin-bottom:18px; cursor:move; }
+.ref-item img{
+  width:100%; display:block; border:1px solid var(--card-border); border-radius:10px;
+  background:#fff; box-shadow:var(--sh-card);
+}
+.ref-item .rl{ font-size:12px; color:var(--ink-2); margin-top:5px; }
+.ref-item .rdel{
+  position:absolute; top:-8px; right:-8px; width:22px; height:22px; border-radius:50%;
+  background:#fff; border:1px solid var(--hairline-strong); color:var(--ink-2); font-size:12px;
+  cursor:pointer; box-shadow:0 1px 3px rgba(16,24,40,.12); transition:all var(--tx);
+  display:flex; align-items:center; justify-content:center;
+}
+.ref-item .rdel:hover{ background:#D4380D; border-color:#D4380D; color:#fff; }
+.ref-empty{
+  height:220px; border:1.5px dashed #D4D8DE; border-radius:var(--r-l);
+  background:rgba(255,255,255,.55);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;
+  color:var(--ink-3); font-size:12px; transition:all var(--tx);
+}
+.ref-empty:hover{ border-color:var(--accent); color:var(--accent); background:var(--accent-soft); }
+.ref-empty .re-plus{ font-size:24px; font-weight:300; line-height:1; }
+
+/* ============ 悬浮工具条：保留毛玻璃，图标统一为线性 SVG ============ */
+.floatbar{
+  position:absolute; bottom:18px; left:50%; transform:translateX(-50%); z-index:50;
+  display:flex; align-items:center; gap:2px; padding:4px 6px;
+  background:rgba(255,255,255,.62);
+  -webkit-backdrop-filter:blur(18px) saturate(1.6); backdrop-filter:blur(18px) saturate(1.6);
+  border:1px solid rgba(255,255,255,.7); border-radius:var(--r-l);
+  box-shadow:var(--sh-float);
+}
+.tool-btn{
+  height:30px; border:1px solid transparent; background:transparent; border-radius:var(--r-m);
+  padding:0 10px; cursor:pointer; font-size:12.5px; color:var(--ink-2);
+  display:inline-flex; align-items:center; gap:6px; white-space:nowrap; transition:all var(--tx);
+}
+.tool-btn:hover{ background:rgba(16,24,40,.05); color:var(--ink-1); }
+.tool-btn.active{ background:var(--accent-soft); color:var(--accent); }
+.tool-btn svg{ flex:none; }
+.tool-btn.zb{ padding:0 8px; font-size:15px; }
+.floatbar .sep{ width:1px; height:18px; background:rgba(16,24,40,.1); margin:0 5px; }
+.floatbar .zoom-label{
+  min-width:46px; text-align:center; font-size:12px; color:var(--ink-2);
+  cursor:pointer; padding:5px 2px; border-radius:var(--r-s);
+  font-variant-numeric:tabular-nums; transition:all var(--tx);
+}
+.floatbar .zoom-label:hover{ background:rgba(16,24,40,.05); color:var(--accent); }
+
+/* 细滚动条 */
+::-webkit-scrollbar{ width:10px; height:10px; }
+::-webkit-scrollbar-track{ background:transparent; }
+::-webkit-scrollbar-thumb{
+  background:rgba(16,24,40,.16); border-radius:5px;
+  border:2px solid transparent; background-clip:padding-box;
+}
+::-webkit-scrollbar-thumb:hover{ background:rgba(16,24,40,.28); border:2px solid transparent; background-clip:padding-box; }
+
+/* ============ 预览开关（不属于界面本身） ============ */
+.devpanel{
+  position:fixed; right:14px; bottom:14px; z-index:999;
+  background:#fff; border:1px solid var(--hairline); border-radius:10px;
+  box-shadow:var(--sh-float); padding:10px 12px; width:208px; font-size:12px; color:var(--ink-2);
+}
+.devpanel .dp-t{ font-size:11px; color:var(--ink-3); margin-bottom:8px; letter-spacing:.04em; }
+.devpanel .dp-row{ display:flex; align-items:center; justify-content:space-between; margin:7px 0; }
+.devpanel .seg{ display:flex; background:#F2F3F5; border-radius:7px; padding:2px; gap:2px; }
+.devpanel .seg button{
+  border:none; background:transparent; border-radius:5px; padding:3px 9px;
+  font-size:11.5px; color:var(--ink-2); cursor:pointer; transition:all var(--tx);
+}
+.devpanel .seg button.on{ background:#fff; color:var(--accent); font-weight:500; box-shadow:0 1px 2px rgba(16,24,40,.1); }
+</style>
+</head>
+<body data-accent="red" data-card="white" data-canvas="plain">
+
+<div class="app">
+  <!-- 顶栏 -->
+  <div class="topbar">
+    <div class="tb-left">
+      <img class="app-icon" src="assets/appicon.png" alt=""/>
+      <span class="logo">PinNote</span>
+      <span class="proj-crumb">JSQ-H60L2<span class="sep">/</span>V2</span>
+    </div>
+    <div class="tb-actions">
+      <button class="btn"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 1v10M1 6h10"/></svg>添加设计稿</button>
+      <button class="btn">版本对比</button>
+    </div>
+    <div class="quick-hint"><span><b>双击</b>左键打点 · <b>右键拖动</b>框选</span><button class="qh-x" title="不再提示">×</button></div>
+    <div class="tb-right">
+      <span class="save-state"><svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M2 6.5 5 9.5 10 3"/></svg>已保存</span>
+      <button class="btn">保存</button>
+      <button class="btn primary">导出 PDF</button>
+      <button class="btn">归档</button>
+      <button class="icon-btn"><svg width="15" height="15" viewBox="0 0 16 16"><circle cx="3" cy="8" r="1.4" fill="currentColor"/><circle cx="8" cy="8" r="1.4" fill="currentColor"/><circle cx="13" cy="8" r="1.4" fill="currentColor"/></svg></button>
+      <span class="sep-v"></span>
+      <div class="win-ctrls">
+        <button class="win-btn"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M0 5h10" stroke="currentColor" stroke-width="1"/></svg></button>
+        <button class="win-btn"><svg width="10" height="10" viewBox="0 0 10 10"><rect x="0.5" y="0.5" width="9" height="9" fill="none" stroke="currentColor"/></svg></button>
+        <button class="win-btn win-close"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M0 0l10 10M10 0L0 10" stroke="currentColor" stroke-width="1"/></svg></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+    <!-- 侧栏 -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <span class="t">项目</span>
+        <span style="display:flex;gap:4px;align-items:center">
+          <button class="sb-add" title="新建项目">+</button>
+          <button class="icon-btn sb-collapse" title="收起"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M7 2 3 6l4 4"/></svg></button>
+        </span>
+      </div>
+      <div class="sidebar-list">
+        <div class="section-label">当前项目</div>
+        <div class="proj active">
+          <div class="proj-name">
+            <span class="p-ico"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M2 4.5A1.5 1.5 0 0 1 3.5 3h3L8 4.5h4.5A1.5 1.5 0 0 1 14 6v5.5a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 11.5v-7z"/></svg></span>
+            JSQ-H60L2
+            <span class="del">×</span>
+          </div>
+          <div class="versions">
+            <div class="ver">V1</div>
+            <div class="ver active">V2</div>
+            <div class="add-version">＋ 添加版本</div>
+          </div>
+        </div>
+        <div class="proj">
+          <div class="proj-name">
+            <span class="p-ico"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M2 4.5A1.5 1.5 0 0 1 3.5 3h3L8 4.5h4.5A1.5 1.5 0 0 1 14 6v5.5a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 11.5v-7z"/></svg></span>
+            YMJ-K40Z7
+            <span class="del">×</span>
+          </div>
+        </div>
+        <div class="section-label">已归档</div>
+        <div class="proj archived">
+          <div class="proj-name">
+            <span class="p-ico"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M2 4.5A1.5 1.5 0 0 1 3.5 3h3L8 4.5h4.5A1.5 1.5 0 0 1 14 6v5.5a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 11.5v-7z"/></svg></span>
+            PBJ-A08C1
+            <span class="del">×</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 工作区 -->
+    <div class="workspace">
+      <div class="board">
+        <div class="lane">
+          <div class="stage">
+            <img src="assets/canvas.jpg" alt="设计稿"/>
+            <button class="imgdel" title="移除此图">×</button>
+            <div class="mark-point" style="left:112px;top:268px"></div>
+            <div class="mark-point selected" style="left:320px;top:357px"></div>
+            <div class="mark-box" style="left:149px;top:417px;width:172px;height:290px"><span class="rs"></span></div>
+          </div>
+          <svg class="links">
+            <line x1="118" y1="268" x2="494" y2="280"/>
+            <line x1="326" y1="357" x2="494" y2="366"/>
+            <line x1="321" y1="562" x2="494" y2="584"/>
+          </svg>
+          <div class="sugg" style="top:236px">
+            <div class="txt">改为竖向列举，再加个底衬</div>
+            <span class="sdel">×</span>
+          </div>
+          <div class="sugg selected" style="top:322px">
+            <div class="txt">雾气不够自然，参考右图换一种素材</div>
+            <span class="sdel">×</span>
+          </div>
+          <div class="sugg" style="top:552px">
+            <div class="txt ph">写下修改建议…</div>
+            <span class="sdel">×</span>
+          </div>
+        </div>
+
+        <div class="floatbar">
+          <button class="tool-btn" title="Q - 点批注">
+            <svg width="15" height="15" viewBox="0 0 16 16"><circle cx="8" cy="5.5" r="3.4" fill="#E5484D"/><path d="M8 9.2v5" stroke="#E5484D" stroke-width="1.8" stroke-linecap="round"/></svg>
+            <span>点批注</span>
+          </button>
+          <button class="tool-btn" title="W - 框批注">
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2.2" y="2.2" width="11.6" height="11.6" rx="1.5"/><rect x="10.6" y="10.6" width="3.4" height="3.4" rx="0.8" fill="currentColor" stroke="none"/></svg>
+            <span>框批注</span>
+          </button>
+          <span class="sep"></span>
+          <button class="tool-btn zb" title="缩小 (-)">−</button>
+          <span class="zoom-label" title="点击重置为 100%">100%</span>
+          <button class="tool-btn zb" title="放大 (+)">+</button>
+          <span class="sep"></span>
+          <button class="tool-btn" title="重置缩放">
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M1 4V1h3M10 1h3v3M13 10v3h-3M4 13H1v-3"/></svg>
+            <span>适应</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 参考图面板 -->
+      <div class="refpanel">
+        <div class="ref-item">
+          <img src="assets/ref1.jpg" alt=""/>
+          <div class="rl">图①</div>
+          <button class="rdel">×</button>
+        </div>
+        <div class="ref-item">
+          <img src="assets/ref2.jpg" alt=""/>
+          <div class="rl">图②</div>
+          <button class="rdel">×</button>
+        </div>
+        <div class="ref-empty">
+          <span class="re-plus">＋</span>
+          <span>拖入或粘贴参考图</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 预览开关：不属于界面本身 -->
+<div class="devpanel">
+  <div class="dp-t">预览开关（非界面一部分）</div>
+  <div class="dp-row"><span>强调色</span>
+    <span class="seg" data-k="accent"><button data-v="red" class="on">图钉红</button><button data-v="blue">现行蓝</button></span>
+  </div>
+  <div class="dp-row"><span>建议卡</span>
+    <span class="seg" data-k="card"><button data-v="white" class="on">白卡</button><button data-v="cream">米色便签</button></span>
+  </div>
+  <div class="dp-row"><span>画布底</span>
+    <span class="seg" data-k="canvas"><button data-v="plain" class="on">纯色</button><button data-v="dots">点阵</button></span>
+  </div>
+</div>
+
+<script>
+document.querySelectorAll('.devpanel .seg').forEach(seg => {
+  seg.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    seg.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+    document.body.dataset[seg.dataset.k] = b.dataset.v;
+  });
+});
+</script>
+</body>
+</html>

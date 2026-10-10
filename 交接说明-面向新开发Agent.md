@@ -39,7 +39,7 @@
 ├── src/
 │   ├── app.js       # 渲染层全部逻辑（多图、缩放、标注、建议框、粘贴、右键菜单）—— 核心
 │   ├── changelog.js # 更新日志数据（发版时新条目加最上面，同时升 package.json 版本号）
-│   └── style.css    # 简约风样式，主色 #4f6ef7
+│   └── style.css    # 设计令牌化样式（v2.0 起）：图钉红 --accent/--mark #E5484D + 中性灰阶，圆角/阴影/间距走 :root 令牌
 ├── build-res/       # icon.png / icon.ico / icons/（工具图标）等打包资源；由 vision/make_icons.py 生成
 ├── vision/          # 视觉素材源文件（软件图标/工具图标）+ 图标生成脚本
 ├── dist/            # 打包产物：PinNote Setup 1.2.0.exe（NSIS 安装包）
@@ -106,6 +106,7 @@
 
 - 用户正式数据目录：Electron `userData` 下的 `store/`（默认 `%APPDATA%/PinNote/store`）。
 - 缓存/测试隔离数据：本项目 `.runtime-cache/`。
+- ⚠️ 开发态（`npm start`）的数据**不在** `%APPDATA%`：`userData` 被重定向到项目内 `.runtime-cache/cache/pinnote/`（纯本地自包含），即开发态项目数据在 `.runtime-cache/cache/pinnote/store/`，与正式数据互不可见。冒烟态则是 `.runtime-cache/smoke-store/`。
 
 ## 10. 给新 Agent 的建议改动流程
 

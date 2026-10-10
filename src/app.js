@@ -286,7 +286,7 @@
     const pending = state.pendingTool;
     if (pending !== 'point' || !e) { hideCursorFollowers(); return; }
     if (!pinEl) {
-      pinEl = el('div', 'cursor-pin', '<svg width="18" height="24" viewBox="0 0 18 24"><circle cx="9" cy="6" r="5.5" fill="#bf4d55" stroke="#fff" stroke-width="1.5"/><path d="M9 12v10" stroke="#bf4d55" stroke-width="2" stroke-linecap="round"/></svg>');
+      pinEl = el('div', 'cursor-pin', '<svg width="18" height="24" viewBox="0 0 18 24"><circle cx="9" cy="6" r="5.5" fill="#E5484D" stroke="#fff" stroke-width="1.5"/><path d="M9 12v10" stroke="#E5484D" stroke-width="2" stroke-linecap="round"/></svg>');
       document.body.appendChild(pinEl);
     }
     pinEl.style.display = 'block';
@@ -804,8 +804,8 @@
   function buildFloatbar() {
     const fb = el('div', 'floatbar');
     fb.innerHTML = `
-      <button type="button" class="tool-btn" data-tool="point" title="Q - 点击后放一个点批注（一次性）"><img class="tool-ico" src="build-res/icons/point.png" alt=""/><span>点批注</span></button>
-      <button type="button" class="tool-btn" data-tool="box" title="W - 点击后拖拽框选（一次性）"><img class="tool-ico" src="build-res/icons/box.png" alt=""/><span>框批注</span></button>
+      <button type="button" class="tool-btn" data-tool="point" title="Q - 点击后放一个点批注（一次性）"><svg width="15" height="15" viewBox="0 0 16 16"><circle cx="8" cy="5.5" r="3.4" fill="#E5484D"/><path d="M8 9.2v5" stroke="#E5484D" stroke-width="1.8" stroke-linecap="round"/></svg><span>点批注</span></button>
+      <button type="button" class="tool-btn" data-tool="box" title="W - 点击后拖拽框选（一次性）"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2.2" y="2.2" width="11.6" height="11.6" rx="1.5"/><rect x="10.6" y="10.6" width="3.4" height="3.4" rx="0.8" fill="currentColor" stroke="none"/></svg><span>框批注</span></button>
       <span class="sep"></span>
       <button type="button" class="tool-btn zb" data-z="out" title="缩小 (-)">−</button>
       <span class="zoom-label" id="zoom-label" title="点击重置为 100%">100%</span>
@@ -822,7 +822,7 @@
     return fb;
   }
 
-  // 常驻快捷操作提示：固定在顶栏中间，点“不再提示”前一直在（只建一次，不随工具条重建）
+  // 常驻快捷操作提示：顶栏中央的 pill（点 × 后永久消失；只建一次，不随工具条重建）
   // 注意：键名带 _v2——旧键 pinnote_quickhint_off 被旧版提示用过（用户点过“不再提示”），
   // 换新键让顶栏提示重新出现一次。
   function ensureQuickHint() {
@@ -832,7 +832,7 @@
     if (off) return;
     const bar = $('.topbar');
     if (!bar) return;
-    const qh = el('div', 'quick-hint', '快捷操作：左键双击打点；右键拖动框选<button type="button" class="hint-off">不再提示</button>');
+    const qh = el('div', 'quick-hint', '<span><b>双击</b>左键打点 · <b>右键拖动</b>框选</span><button type="button" class="hint-off" title="不再提示">×</button>');
     qh.id = 'quick-hint';
     bar.appendChild(qh);
     qh.querySelector('.hint-off').onclick = () => {
@@ -1030,9 +1030,9 @@
       const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
       line.setAttribute('x1', a.x); line.setAttribute('y1', a.y);
       line.setAttribute('x2', x2); line.setAttribute('y2', y2);
-      line.setAttribute('stroke', '#bf4d55');
+      line.setAttribute('stroke', 'rgba(229,72,77,.55)');
       line.setAttribute('stroke-width', '1.5');
-      if (state.selected === m.id) line.setAttribute('stroke', '#1677ff');
+      if (state.selected === m.id) line.setAttribute('stroke', '#E5484D');
       svg.appendChild(line);
     });
   }

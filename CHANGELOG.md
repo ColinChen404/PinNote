@@ -2,6 +2,21 @@
 
 本文件记录 PinNote 的所有重要变更。/ All notable changes to PinNote are documented here.
 
+## v2.0.0 · 2026-10-10
+
+- 界面焕新：全新品牌视觉——图钉红成为应用唯一强调色（取代原来的蓝），界面更干净、更有辨识度
+- 设计令牌化：统一字号、间距、圆角、阴影与过渡动效，消灭各处的细节不一致
+- 标注更醒目：点/框批注与连线升级为鲜亮图钉红 + 白色光晕，在任何设计稿上都清晰可见
+- 悬浮工具条图标重绘为统一线性风格；顶栏快捷操作提示改为可关闭的小气泡
+- 导出的 PDF 同步换新：标注、连线与建议卡样式和应用内保持一致
+
+> English
+> - Visual refresh: new brand look — the pushpin red becomes the app's single accent color (replacing the old blue), for a cleaner, more recognizable interface
+> - Design tokens: unified font sizes, spacing, radii, shadows and transitions, eliminating detail inconsistencies
+> - Clearer annotations: pins/boxes and connector lines upgraded to a vivid pin red with a white halo, legible on any design draft
+> - Floating toolbar icons redrawn in a consistent line style; the top-bar shortcut hint is now a dismissible pill
+> - Exported PDFs match: marks, lines and note cards share the app's new styling
+
 ## v1.6.0 · 2026-09-21
 
 - 新增：版本对比模式——顶栏「版本对比」一键并排查看历史版本设计稿，滚动与缩放同步，两稿顶部对齐

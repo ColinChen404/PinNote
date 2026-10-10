@@ -395,13 +395,13 @@ function buildPdfHtml(detailDataUrl, L) {
   const marks = (L.marks || []).map(m => {
     if (m.type === 'point') {
       const x = m.x, y = m.y;
-      return `<div class="pt" style="left:${x - 5}px;top:${y - 5}px"></div>`;
+      return `<div class="pt" style="left:${x - 6}px;top:${y - 6}px"></div>`;
     } else {
       return `<div class="box" style="left:${m.x}px;top:${m.y}px;width:${m.w}px;height:${m.h}px"></div>`;
     }
   }).join('');
   const lines = (L.lines || []).map(l => {
-    return `<line x1="${l.x1}" y1="${l.y1}" x2="${l.x2}" y2="${l.y2}" stroke="#bf4d55" stroke-width="1.5"/>`;
+    return `<line x1="${l.x1}" y1="${l.y1}" x2="${l.x2}" y2="${l.y2}" stroke="rgba(229,72,77,.55)" stroke-width="1.5"/>`;
   }).join('');
   const sugg = (L.suggestions || []).map(s => {
     return `<div class="sg" style="left:${s.left}px;top:${s.top}px;width:${s.width}px;min-height:${s.height}px">${esc(s.text).replace(/\n/g, '<br>')}</div>`;
@@ -416,13 +416,13 @@ function buildPdfHtml(detailDataUrl, L) {
     ${fontCss}
     .page{position:relative;width:${W}px;height:${H}px;background:#fff;font-family:"Noto Sans SC","Microsoft YaHei",sans-serif;}
     .detail{position:absolute;left:${L.detailLeft||0}px;top:0;width:${L.detailWidth||0}px;height:${L.detailHeight||0}px}
-    .pt{position:absolute;width:10px;height:10px;border-radius:50%;background:#bf4d55;}
-    .box{position:absolute;border:2px solid #bf4d55;background:rgba(191,77,85,0.05);}
+    .pt{position:absolute;width:12px;height:12px;border-radius:50%;background:#E5484D;box-shadow:0 0 0 2px rgba(255,255,255,.9);}
+    .box{position:absolute;border:1.5px solid #E5484D;background:rgba(229,72,77,0.05);border-radius:2px;}
     svg{position:absolute;left:0;top:0;pointer-events:none;}
-    .sg{position:absolute;background:#fff;border:1px solid #e9eaee;border-radius:4px;padding:8px 10px;font-size:13px;line-height:1.65;box-sizing:border-box;white-space:pre-wrap;word-break:break-all;color:#222;}
+    .sg{position:absolute;background:#fff;border:1px solid rgba(16,24,40,.07);border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.65;box-sizing:border-box;white-space:pre-wrap;word-break:break-all;color:#1D2129;box-shadow:0 1px 2px rgba(16,24,40,.05),0 8px 24px rgba(16,24,40,.06);}
     /* .sg 字号与应用内建议框保持一致（app.js/style.css 同为 13px，改动需三处同步） */
     .rf{position:absolute;text-align:center;}
-    .rl{font-size:11px;color:#444;margin-top:4px;}
+    .rl{font-size:11px;color:#4E5560;margin-top:4px;}
   </style></head><body><div class="page">
     ${detailImgs}
     ${marks}
